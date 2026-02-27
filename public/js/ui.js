@@ -110,9 +110,8 @@ const UI = {
     updateAlerts() {
         const alertsSection = document.getElementById('alertsSection');
         const alertsList = document.getElementById('alertsList');
-        const alertBanner = document.getElementById('alertBanner');
         
-        if (!alertsSection || !alertsList || !alertBanner) return;
+        if (!alertsSection || !alertsList) return;
         
         const lowStockItems = API.items.filter(item => 
             item.minStock > 0 && item.quantity <= item.minStock
@@ -153,15 +152,8 @@ const UI = {
             }).join('');
             
             alertsSection.classList.remove('hidden');
-            alertBanner.innerHTML = `
-                <span>⚠️</span>
-                <span>${lowStockItems.length} item${lowStockItems.length > 1 ? 's' : ''} below minimum stock!</span>
-                <span class="alert-badge">Action needed</span>
-            `;
-            alertBanner.classList.add('show');
         } else {
             alertsSection.classList.add('hidden');
-            alertBanner.classList.remove('show');
         }
     },
 
@@ -265,7 +257,8 @@ const UI = {
     },
 
     scrollToAlerts() {
-        document.getElementById('alertsSection').scrollIntoView({ behavior: 'smooth' });
+        const el = document.getElementById('alertsSection');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
     },
 
     showStats() {
