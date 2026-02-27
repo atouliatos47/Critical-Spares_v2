@@ -1,0 +1,41 @@
+{
+  "items": [
+    {
+      "id": 1,
+      "name": "10 mm Proximity Sensor",
+      "location": "Press 4",
+      "addedBy": "Andreas",
+      "quantity": 17,
+      "minStock": 3,
+      "notes": "",
+      "createdAt": "2026-02-27T11:32:52.778Z",
+      "lastUpdated": "2026-02-27T12:11:58.839Z",
+      "lastUsedBy": "Andreas"
+    },
+    {
+      "id": 2,
+      "name": "12 mm Proximity sensor",
+      "location": "Bruderer 1",
+      "addedBy": "Andreas",
+      "quantity": 13,
+      "minStock": 3,
+      "notes": "",
+      "createdAt": "2026-02-27T11:33:23.824Z",
+      "lastUpdated": "2026-02-27T12:13:26.522Z",
+      "lastUsedBy": "Richard Hickman"
+    },
+    {
+      "id": 3,
+      "name": "Condactor LC567",
+      "location": "Bruderer 2",
+      "addedBy": "Andreas",
+      "quantity": 2,
+      "minStock": 3,
+      "notes": "",
+      "createdAt": "2026-02-27T12:09:00.038Z",
+      "lastUpdated": "2026-02-27T12:14:25.515Z",
+      "lastUsedBy": "Andreas"
+    }
+  ],
+  "nextId": 4
+}
