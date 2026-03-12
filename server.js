@@ -4,10 +4,13 @@ const path = require('path');
 const url = require('url');
 const os = require('os');
 
-const PORT = 3000;
+// Use Render's port if available, otherwise default to 3000
+const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, 'data');
 const DB_PATH = path.join(DATA_DIR, 'db.json');
-const PUBLIC_DIR = path.join(__dirname, 'public');
+
+// UPDATED: Files are now in the root directory for GitHub Pages compatibility
+const APP_DIR = __dirname; 
 
 let items = [];
 let workstations = [];
@@ -91,10 +94,11 @@ function getBody(req) {
 // Serve static files
 async function serveStaticFile(res, filePath, contentType) {
     try {
-        const data = await fs.readFile(filePath, 'utf8');
+        const data = await fs.readFile(filePath);
         res.writeHead(200, { 'Content-Type': contentType });
         res.end(data);
     } catch (err) {
+        console.error(`❌ Missing file: ${filePath}`);
         res.writeHead(404);
         res.end('File not found');
     }
@@ -116,80 +120,61 @@ const server = http.createServer(async (req, res) => {
 
     // Serve HTML
     if (parsedUrl.pathname === '/' || parsedUrl.pathname === '/index.html') {
-        return serveStaticFile(res, path.join(PUBLIC_DIR, 'index.html'), 'text/html');
+        return serveStaticFile(res, path.join(APP_DIR, 'index.html'), 'text/html');
     }
 
     // Serve images
     if (parsedUrl.pathname.startsWith('/img/')) {
-        const imgPath = path.join(PUBLIC_DIR, parsedUrl.pathname);
-        try {
-            const data = await fs.readFile(imgPath);
-            res.writeHead(200, { 'Content-Type': 'image/png' });
-            return res.end(data);
-        } catch (err) {
-            res.writeHead(404);
-            return res.end('Image not found');
-        }
+        const imgPath = path.join(APP_DIR, parsedUrl.pathname);
+        return serveStaticFile(res, imgPath, 'image/png');
     }
 
     // Serve CSS
     if (parsedUrl.pathname === '/css/style.css') {
-        return serveStaticFile(res, path.join(PUBLIC_DIR, 'css/style.css'), 'text/css');
+        return serveStaticFile(res, path.join(APP_DIR, 'css', 'style.css'), 'text/css');
     }
 
     // Serve JS files
     if (parsedUrl.pathname.startsWith('/js/') && parsedUrl.pathname.endsWith('.js')) {
-        return serveStaticFile(res, path.join(PUBLIC_DIR, parsedUrl.pathname), 'application/javascript');
+        const jsPath = path.join(APP_DIR, parsedUrl.pathname);
+        return serveStaticFile(res, jsPath, 'application/javascript');
     }
 
     // SSE with user tracking
     if (parsedUrl.pathname === '/events' && req.method === 'GET') {
         const userName = parsedUrl.query.name || 'Anonymous';
-        const userIP = req.socket.remoteAddress;
+        const userIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
         
-        console.log(`📱 New connection from ${userIP} with name: ${userName}`);
-
         res.writeHead(200, {
             'Content-Type': 'text/event-stream',
             'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-            'Access-Control-Allow-Origin': '*'
+            'Connection': 'keep-alive'
         });
 
-        // Store user connection
         connectedUsers.set(res, {
             name: userName,
             connectedAt: new Date().toISOString(),
             ip: userIP
         });
 
-        // Send initial data (now includes workstations)
         res.write(`event: init\ndata: ${JSON.stringify({ items, workstations })}\n\n`);
-        
-        // Broadcast updated user list to ALL clients
         broadcastUserList();
-
         clients.push(res);
-        console.log(`👤 ${userName} connected. Total clients: ${clients.length}, Total users: ${connectedUsers.size}`);
 
         req.on('close', () => {
             clients = clients.filter(c => c !== res);
             connectedUsers.delete(res);
             broadcastUserList();
-            console.log(`👤 User disconnected. Total clients: ${clients.length}, Total users: ${connectedUsers.size}`);
         });
         return;
     }
 
     // ===== ITEMS ENDPOINTS =====
-
-    // Get items
     if (parsedUrl.pathname === '/items' && req.method === 'GET') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(items));
     }
 
-    // Add item
     if (parsedUrl.pathname === '/items' && req.method === 'POST') {
         try {
             const body = await getBody(req);
@@ -208,7 +193,6 @@ const server = http.createServer(async (req, res) => {
             items.push(item);
             await saveData();
             broadcast('newItem', item);
-            console.log(`➕ Added: ${item.name} by ${item.addedBy}${item.workstationId ? ' (WS: ' + item.workstationId + ')' : ''}`);
             res.writeHead(201, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify(item));
         } catch (err) {
@@ -235,8 +219,6 @@ const server = http.createServer(async (req, res) => {
             item.lastUsedBy = body.usedBy || 'Unknown';
             await saveData();
             broadcast('updateItem', item);
-            const lowStock = item.minStock > 0 && item.quantity <= item.minStock;
-            console.log(`⬇️ Used: ${item.name} (-${amount}) -> ${item.quantity}${lowStock ? ' ⚠️' : ''}`);
             res.end(JSON.stringify(item));
         } catch (err) {
             res.writeHead(400);
@@ -261,7 +243,6 @@ const server = http.createServer(async (req, res) => {
             item.lastUpdated = new Date().toISOString();
             await saveData();
             broadcast('updateItem', item);
-            console.log(`⬆️ Restocked: ${item.name} (+${amount}) -> ${item.quantity}`);
             res.end(JSON.stringify(item));
         } catch (err) {
             res.writeHead(400);
@@ -282,27 +263,19 @@ const server = http.createServer(async (req, res) => {
         const removed = items.splice(index, 1)[0];
         await saveData();
         broadcast('deleteItem', { id });
-        console.log(`🗑️ Deleted: ${removed.name}`);
         res.end(JSON.stringify({ success: true }));
         return;
     }
 
     // ===== WORKSTATION ENDPOINTS =====
-
-    // Get workstations
     if (parsedUrl.pathname === '/workstations' && req.method === 'GET') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(workstations));
     }
 
-    // Add workstation
     if (parsedUrl.pathname === '/workstations' && req.method === 'POST') {
         try {
             const body = await getBody(req);
-            if (!body.name || !body.name.trim()) {
-                res.writeHead(400);
-                return res.end(JSON.stringify({ error: 'Workstation name is required' }));
-            }
             const ws = {
                 id: nextWsId++,
                 name: body.name.trim(),
@@ -313,7 +286,6 @@ const server = http.createServer(async (req, res) => {
             workstations.push(ws);
             await saveData();
             broadcast('newWorkstation', ws);
-            console.log(`🏭 Added workstation: ${ws.name} by ${ws.addedBy}`);
             res.writeHead(201, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify(ws));
         } catch (err) {
@@ -323,7 +295,6 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
-    // Delete workstation
     const deleteWsMatch = parsedUrl.pathname.match(/^\/workstations\/(\d+)\/delete$/);
     if (deleteWsMatch && req.method === 'POST') {
         const id = parseInt(deleteWsMatch[1]);
@@ -332,18 +303,11 @@ const server = http.createServer(async (req, res) => {
             res.writeHead(404);
             return res.end(JSON.stringify({ error: 'Not found' }));
         }
-        const removed = workstations.splice(index, 1)[0];
-        // Unassign items from deleted workstation
-        items.forEach(item => {
-            if (item.workstationId === id) {
-                item.workstationId = null;
-            }
-        });
+        workstations.splice(index, 1);
+        items.forEach(item => { if (item.workstationId === id) item.workstationId = null; });
         await saveData();
         broadcast('deleteWorkstation', { id });
-        // Also broadcast updated items since workstation assignments changed
         broadcast('init_items', items);
-        console.log(`🗑️ Deleted workstation: ${removed.name}`);
         res.end(JSON.stringify({ success: true }));
         return;
     }
@@ -356,14 +320,7 @@ const server = http.createServer(async (req, res) => {
 async function start() {
     await loadData();
     server.listen(PORT, '0.0.0.0', () => {
-        const ip = getLocalIP();
-        console.log('\n' + '='.repeat(50));
-        console.log('📦 CRITICAL SPARES TRACKER');
-        console.log('='.repeat(50));
-        console.log(`\n📍 Local:    http://localhost:${PORT}`);
-        console.log(`📱 Network:   http://${ip}:${PORT}`);
-        console.log(`\n📊 Items: ${items.length} | Workstations: ${workstations.length}`);
-        console.log('\n' + '='.repeat(50) + '\n');
+        console.log(`🚀 Server live on port ${PORT}`);
     });
 }
 
