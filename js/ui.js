@@ -3,7 +3,57 @@ const UI = {
     currentFilter: 'all',
     currentTab: 'add',
     searchTimeout: null,
-    scanner: null, // Holds the Html5Qrcode instance
+    scanner: null,
+    clockInterval: null,
+
+    // ===== HOME SCREEN =====
+
+    showHome() {
+        const screen = document.getElementById('homeScreen');
+        if (screen) {
+            screen.classList.remove('hidden');
+            this.startClock();
+        }
+    },
+
+    hideHome() {
+        const screen = document.getElementById('homeScreen');
+        if (screen) {
+            screen.classList.add('hidden');
+            this.stopClock();
+        }
+    },
+
+    startClock() {
+        this.updateClock();
+        this.clockInterval = setInterval(() => this.updateClock(), 1000);
+    },
+
+    stopClock() {
+        if (this.clockInterval) {
+            clearInterval(this.clockInterval);
+            this.clockInterval = null;
+        }
+    },
+
+    updateClock() {
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2, '0');
+        const m = String(now.getMinutes()).padStart(2, '0');
+        const s = String(now.getSeconds()).padStart(2, '0');
+
+        const clockEl = document.getElementById('homeClock');
+        const secsEl = document.getElementById('homeSeconds');
+        const dateEl = document.getElementById('homeDate');
+
+        if (clockEl) clockEl.textContent = h + ':' + m;
+        if (secsEl) secsEl.textContent = ':' + s;
+        if (dateEl) {
+            const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+            const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+            dateEl.textContent = days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+        }
+    },
 
     // ===== BARCODE SCANNER LOGIC =====
 
