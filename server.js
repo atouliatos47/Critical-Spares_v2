@@ -190,6 +190,10 @@ const server = http.createServer(async (req, res) => {
         return serveFile(res, path.join(APP_DIR, 'css/style.css'), 'text/css');
     if (p.pathname.startsWith('/js/') && p.pathname.endsWith('.js'))
         return serveFile(res, path.join(APP_DIR, p.pathname), 'application/javascript');
+    if (p.pathname === '/manifest.json')
+        return serveFile(res, path.join(APP_DIR, 'manifest.json'), 'application/manifest+json');
+    if (p.pathname === '/sw.js')
+        return serveFile(res, path.join(APP_DIR, 'sw.js'), 'application/javascript');
 
     // SSE
     if (p.pathname === '/events' && req.method === 'GET') {
