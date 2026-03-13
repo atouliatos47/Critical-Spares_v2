@@ -310,6 +310,7 @@ const UI = {
                 <div class="item-actions">
                     <button class="act-btn act-use" onclick="UI.handleUseClick(${item.id})" ${item.quantity === 0 ? 'disabled' : ''}>- Use</button>
                     <button class="act-btn act-restock" onclick="UI.handleRestockClick(${item.id})">+ Restock</button>
+                    <button class="act-btn act-edit" onclick="UI.handleEditClick(${item.id})">✏️</button>
                     <button class="act-btn act-delete" onclick="UI.handleDeleteClick(${item.id})">🗑</button>
                 </div>
             </div>
@@ -334,6 +335,86 @@ const UI = {
         const item = API.items.find(i => i.id === id);
         if (item && window.Components) {
             Components.showDeleteModal(item);
+        }
+    },
+
+    handleEditClick(id) {
+        const item = API.items.find(i => i.id === id);
+        if (item) this.showEditModal(item);
+    },
+
+    showEditModal(item) {
+        const overlay = document.getElementById('modalOverlay');
+        const modal = document.getElementById('modal');
+        if (!overlay || !modal) return;
+
+        const wsOptions = API.workstations.map(ws =>
+            `<option value="${ws.id}" ${item.workstationId == ws.id ? 'selected' : ''}>${Utils.escapeHtml(ws.name)}</option>`
+        ).join('');
+
+        modal.innerHTML = `
+            <div class="modal-header">
+                <h3>✏️ Edit Part</h3>
+                <button class="modal-close" onclick="Utils.closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Part Number</label>
+                    <input type="text" id="editPartNo" value="${Utils.escapeHtml(item.partNo || '')}" placeholder="e.g. BRG-6205">
+                </div>
+                <div class="form-group">
+                    <label>Part Name *</label>
+                    <input type="text" id="editPartName" value="${Utils.escapeHtml(item.name || '')}" placeholder="Part name">
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" id="editLocation" value="${Utils.escapeHtml(item.location || '')}" placeholder="e.g. Shelf A3">
+                </div>
+                <div class="form-group">
+                    <label>Workstation</label>
+                    <select id="editWorkstation">
+                        <option value="">— No Workstation —</option>
+                        ${wsOptions}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Minimum Stock</label>
+                    <input type="number" id="editMinStock" value="${item.minStock || 0}" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="editNotes" rows="2" placeholder="Optional notes">${Utils.escapeHtml(item.notes || '')}</textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="Utils.closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="UI.saveEdit(${item.id})">💾 Save Changes</button>
+            </div>
+        `;
+
+        overlay.classList.add('show');
+    },
+
+    async saveEdit(id) {
+        const name = document.getElementById('editPartName').value.trim();
+        if (!name) {
+            Utils.shakeElement(document.getElementById('editPartName'));
+            return;
+        }
+        const data = {
+            partNo:        document.getElementById('editPartNo').value.trim(),
+            name,
+            location:      document.getElementById('editLocation').value.trim(),
+            workstationId: document.getElementById('editWorkstation').value || null,
+            minStock:      parseInt(document.getElementById('editMinStock').value) || 0,
+            notes:         document.getElementById('editNotes').value.trim()
+        };
+        try {
+            await API.updateItem(id, data);
+            Utils.closeModal();
+            Utils.showToast('Part updated ✓');
+        } catch (e) {
+            Utils.showToast('Failed to save changes', true);
         }
     },
 
