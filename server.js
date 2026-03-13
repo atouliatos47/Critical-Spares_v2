@@ -7,7 +7,7 @@ const os = require('os');
 const PORT = 3000;
 const DATA_DIR = path.join(__dirname, 'data');
 const DB_PATH = path.join(DATA_DIR, 'db.json');
-const PUBLIC_DIR = path.join(__dirname, 'public');
+const PUBLIC_DIR = __dirname;
 
 let items = [];
 let workstations = [];
