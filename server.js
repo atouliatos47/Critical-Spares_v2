@@ -3,9 +3,76 @@ const fs = require('fs').promises;
 const path = require('path');
 const url = require('url');
 const { Pool } = require('pg');
+const https = require('https');
 
 const PORT = process.env.PORT || 3000;
 const APP_DIR = __dirname;
+
+// ===== EMAIL ALERTS =====
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const ALERT_RECIPIENTS = [
+    'atouliatos43@gmail.com',
+    'andreast@clamason.com'
+];
+
+async function sendLowStockAlert(item, usedBy) {
+    if (!RESEND_API_KEY) return;
+    if (item.quantity > item.min_stock) return;
+
+    const subject = `⚠️ Low Stock Alert: ${item.name}`;
+    const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: #2D4A5C; padding: 20px; border-radius: 8px 8px 0 0;">
+                <h2 style="color: #95C11F; margin: 0;">⚠️ Low Stock Alert</h2>
+                <p style="color: white; margin: 5px 0 0 0;">Clamason Critical Spares Tracker</p>
+            </div>
+            <div style="background: #fff3cd; padding: 20px; border: 2px solid #f59e0b; border-radius: 0 0 8px 8px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr><td style="padding: 8px; font-weight: bold; color: #666;">Part Name</td><td style="padding: 8px; font-size: 18px; font-weight: bold; color: #2D4A5C;">${item.name}</td></tr>
+                    ${item.part_no ? `<tr><td style="padding: 8px; font-weight: bold; color: #666;">Part No.</td><td style="padding: 8px;">${item.part_no}</td></tr>` : ''}
+                    ${item.location ? `<tr><td style="padding: 8px; font-weight: bold; color: #666;">Location</td><td style="padding: 8px;">${item.location}</td></tr>` : ''}
+                    <tr><td style="padding: 8px; font-weight: bold; color: #666;">Current Stock</td><td style="padding: 8px; font-size: 20px; font-weight: bold; color: #ef4444;">${item.quantity}</td></tr>
+                    <tr><td style="padding: 8px; font-weight: bold; color: #666;">Minimum Stock</td><td style="padding: 8px;">${item.min_stock}</td></tr>
+                    <tr><td style="padding: 8px; font-weight: bold; color: #666;">Used By</td><td style="padding: 8px;">${usedBy}</td></tr>
+                    <tr><td style="padding: 8px; font-weight: bold; color: #666;">Time</td><td style="padding: 8px;">${new Date().toLocaleString('en-GB')}</td></tr>
+                </table>
+                <p style="margin-top: 20px; color: #92400e; font-weight: bold;">Please restock this item as soon as possible.</p>
+            </div>
+        </div>
+    `;
+
+    const payload = JSON.stringify({
+        from: 'Clamason Spares <onboarding@resend.dev>',
+        to: ALERT_RECIPIENTS,
+        subject,
+        html
+    });
+
+    const options = {
+        hostname: 'api.resend.com',
+        path: '/emails',
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${RESEND_API_KEY}`,
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(payload)
+        }
+    };
+
+    return new Promise((resolve) => {
+        const req = https.request(options, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                console.log(`📧 Low stock email sent for ${item.name} (status: ${res.statusCode})`);
+                resolve();
+            });
+        });
+        req.on('error', (e) => console.error('Email error:', e));
+        req.write(payload);
+        req.end();
+    });
+}
 
 // ===== DATABASE =====
 const pool = new Pool({
@@ -179,6 +246,10 @@ const server = http.createServer(async (req, res) => {
             const item = mapItem(r.rows[0]);
             broadcast('updateItem', item);
             res.end(JSON.stringify(item));
+            // Send low stock alert if stock hit or dropped below minimum
+            if (item.quantity <= item.minStock) {
+                sendLowStockAlert(r.rows[0], b.usedBy || 'Unknown');
+            }
         } catch (e) { res.writeHead(400); res.end(JSON.stringify({ error: 'Invalid request' })); }
         return;
     }
