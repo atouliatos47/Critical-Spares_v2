@@ -11,128 +11,58 @@ const UI = {
         const modal = document.getElementById('scannerModal');
         if (modal) modal.classList.add('active'); // Show modal
         
-        // Make sure we create a new scanner instance
-        if (this.scanner) {
-            try {
-                this.scanner.stop();
-            } catch (e) {
-                // Ignore errors on stop
-            }
-        }
+        this.scanner = new Html5Qrcode("reader");
+        const config = { fps: 10, qrbox: { width: 250, height: 150 } };
         
-        // Wait a moment for the modal to be visible
-        setTimeout(() => {
-            const readerElement = document.getElementById('reader');
-            if (!readerElement) {
-                alert('Scanner element not found');
-                return;
-            }
-            
-            this.scanner = new Html5Qrcode("reader");
-            const config = { 
-                fps: 10, 
-                qrbox: { width: 250, height: 150 },
-                rememberLastUsedCamera: true,
-                showTorchButtonIfSupported: true
-            };
-            
-            this.scanner.start(
-                { facingMode: "environment" }, 
-                config, 
-                (decodedText, decodedResult) => {
-                    // Success callback - pass the decoded text
-                    console.log('Scan success:', decodedText);
-                    this.handleScanResult(decodedText);
-                },
-                (errorMessage) => {
-                    // Error callback - ignore most errors as they're continuous
-                    // console.log('Scan error:', errorMessage);
-                }
-            ).catch(err => {
-                console.error('Scanner start error:', err);
-                alert("Camera Error: Please ensure you are using HTTPS and have granted permissions.\n\n" + err);
-                this.closeScanner();
-            });
-        }, 300); // Small delay to ensure modal is visible
+        this.scanner.start(
+            { facingMode: "environment" }, 
+            config, 
+            (decodedText) => this.handleScanResult(decodedText)
+        ).catch(err => {
+            alert("Camera Error: Please ensure you are using HTTPS and have granted permissions. " + err);
+            this.closeScanner();
+        });
     },
 
     closeScanner() {
         const modal = document.getElementById('scannerModal');
-        
-        if (this.scanner) {
-            try {
-                if (this.scanner.isScanning) {
-                    this.scanner.stop().then(() => {
-                        if (modal) modal.classList.remove('active');
-                        this.scanner = null;
-                    }).catch(() => {
-                        if (modal) modal.classList.remove('active');
-                        this.scanner = null;
-                    });
-                } else {
-                    if (modal) modal.classList.remove('active');
-                    this.scanner = null;
-                }
-            } catch (err) {
-                console.error('Error stopping scanner:', err);
+        if (this.scanner && this.scanner.isScanning) {
+            this.scanner.stop().then(() => {
                 if (modal) modal.classList.remove('active');
-                this.scanner = null;
-            }
+            }).catch(() => {
+                if (modal) modal.classList.remove('active');
+            });
         } else {
             if (modal) modal.classList.remove('active');
         }
     },
 
     handleScanResult(barcode) {
-        console.log('Handling scan result:', barcode);
-        
         if (navigator.vibrate) navigator.vibrate(100);
 
-        // Clean up the barcode - remove any whitespace
-        barcode = barcode.trim();
-
-        // Find item by barcode (check both barcode field and notes for backward compatibility)
+        // Find item by name OR check if notes contain the barcode
         const item = API.items.find(i => 
-            (i.barcode && i.barcode === barcode) || 
+            i.name.toLowerCase() === barcode.toLowerCase() || 
             (i.notes && i.notes.includes(barcode))
         );
 
-        console.log('Found item:', item);
-        
         this.closeScanner();
 
         if (item) {
             // ITEM EXISTS: Open the existing Use modal
             setTimeout(() => {
-                if (window.Components) {
-                    Components.showUseModal(item);
-                    Utils.showToast(`Found: ${item.name}`);
-                } else {
-                    console.error('Components not available');
-                    Utils.showToast('Error: Cannot open item details', 3000);
-                }
+                if (window.Components) Components.showUseModal(item);
+                Utils.showToast(`Found: ${item.name}`);
             }, 500);
         } else {
-            // NEW ITEM: Switch to Add tab and pre-fill the barcode field
+            // NEW ITEM: Switch to Add tab and pre-fill the name
             this.switchTab('add');
-            
-            const barcodeField = document.getElementById('partBarcode');
-            const nameField = document.getElementById('partName');
-            
-            if (barcodeField) {
-                barcodeField.value = barcode;
-                barcodeField.readOnly = true; // Keep it read-only after scan
-                
-                // Move focus to part name for easy entry
-                if (nameField) {
-                    setTimeout(() => nameField.focus(), 300);
-                }
-                
-                Utils.showToast("New barcode detected. Please enter part name and details.", 4000);
-            } else {
-                console.error('Barcode field not found');
-                Utils.showToast('Error: Barcode field missing', 3000);
+            const nameInput = document.getElementById('partName');
+            if (nameInput) {
+                nameInput.value = barcode;
+                nameInput.focus();
             }
+            Utils.showToast("New barcode detected. Please fill in details.");
         }
     },
 
@@ -188,9 +118,7 @@ const UI = {
         if (searchTerm) {
             filtered = filtered.filter(item => {
                 const wsName = API.getWorkstationName(item.workstationId) || '';
-                // Include barcode in search
-                return (item.barcode && item.barcode.toLowerCase().includes(searchTerm)) ||
-                    item.name.toLowerCase().includes(searchTerm) ||
+                return item.name.toLowerCase().includes(searchTerm) ||
                     (item.location && item.location.toLowerCase().includes(searchTerm)) ||
                     (item.notes && item.notes.toLowerCase().includes(searchTerm)) ||
                     wsName.toLowerCase().includes(searchTerm);
@@ -241,10 +169,6 @@ const UI = {
         const time = Utils.formatTime(item.lastUpdated || item.createdAt);
         const wsName = API.getWorkstationName(item.workstationId);
         
-        // Show barcode if available
-        const barcodeDisplay = item.barcode ? 
-            `<div class="item-barcode" style="font-size: 11px; color: #6b7280; margin-top: 4px; font-family: monospace;">📷 #${Utils.escapeHtml(item.barcode)}</div>` : '';
-        
         return `
             <div class="item-card ${cardClass}">
                 <div class="item-header">
@@ -254,7 +178,6 @@ const UI = {
                         <span class="item-qty ${qtyClass}">${item.quantity}</span>
                     </div>
                 </div>
-                ${barcodeDisplay}
                 <div class="item-meta">
                     ${wsName ? '<span class="ws-tag">🏭 ' + Utils.escapeHtml(wsName) + '</span>' : ''}
                     ${item.location ? '<span>📍 ' + Utils.escapeHtml(item.location) + '</span>' : ''}
@@ -494,32 +417,16 @@ const UI = {
     },
 
     async addItem() {
-        const barcodeField = document.getElementById('partBarcode');
-        const nameField = document.getElementById('partName');
-        
-        const barcode = barcodeField ? barcodeField.value.trim() : '';
-        const name = nameField.value.trim();
-        
-        // Validate both fields
-        if (!barcode) {
-            Utils.shakeElement(barcodeField);
-            Utils.showToast('Please scan or enter a Part No.', 3000);
-            return;
-        }
-        
+        const nameInput = document.getElementById('partName');
+        const name = nameInput.value.trim();
         if (!name) {
-            Utils.shakeElement(nameField);
-            Utils.showToast('Please enter a Part Name', 3000);
+            Utils.shakeElement(nameInput);
             return;
         }
-        
         Utils.showLoading();
-        
         const wsSelect = document.getElementById('partWorkstation');
         const workstationId = wsSelect && wsSelect.value ? parseInt(wsSelect.value) : null;
-        
         const item = {
-            barcode: barcode,
             name: name,
             location: document.getElementById('partLocation').value.trim(),
             quantity: parseInt(document.getElementById('partQty').value) || 1,
@@ -528,25 +435,17 @@ const UI = {
             workstationId: workstationId,
             addedBy: App.userName
         };
-        
         try {
             await API.addItem(item);
-            
-            // Clear all fields including barcode
-            if (barcodeField) barcodeField.value = '';
-            nameField.value = '';
+            document.getElementById('partName').value = '';
             document.getElementById('partLocation').value = '';
             document.getElementById('partQty').value = '1';
             document.getElementById('partMinStock').value = '0';
             document.getElementById('partNotes').value = '';
             if (wsSelect) wsSelect.value = '';
-            
             Utils.showToast('Part added!');
             this.switchTab('list');
-        } catch (err) { 
-            console.error('Error adding item:', err);
-            Utils.showToast('Error adding part', 3000);
-        } finally {
+        } catch (err) { } finally {
             Utils.hideLoading();
         }
     },
