@@ -84,16 +84,8 @@
                 </div>
             </div>
 
-            <div class="tabs">
-                <button class="tab active" onclick="UI.switchTab('add')" id="tabAdd">+ Add Part</button>
-                <button class="tab" onclick="UI.switchTab('list')" id="tabList">
-                    Stock List
-                    <span class="low-badge" id="lowBadge">0</span>
-                </button>
-                <button class="tab" onclick="UI.switchTab('workstations')" id="tabWorkstations">🏭 Workstations</button>
-                <button class="tab" onclick="UI.openScanner()" style="background: #2D4A5C; color: white;">📷 Scan</button>
-                <button class="tab" onclick="UI.showHome()" style="background: #1a2d3d; color: #95C11F; flex: 0; padding: 12px 14px;">🏠</button>
-            </div>
+            <!-- spacer so content doesn't hide behind bottom nav -->
+            <div style="height: 80px;"></div>
 
             <div id="addView">
                 <div class="form-card">
@@ -187,6 +179,30 @@
     <div class="loading-spinner" id="loadingSpinner">
         <div class="spinner"></div>
     </div>
+
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav">
+        <button class="bnav-item" onclick="UI.switchTab('add')" id="tabAdd">
+            <span class="bnav-icon">＋</span>
+            <span class="bnav-label">Add Part</span>
+        </button>
+        <button class="bnav-item" onclick="UI.switchTab('list')" id="tabList">
+            <span class="bnav-icon">📦</span>
+            <span class="bnav-label">Stock <span class="low-badge" id="lowBadge" style="display:none;">0</span></span>
+        </button>
+        <button class="bnav-home" onclick="UI.showHome()">
+            <span class="bnav-home-icon">🏠</span>
+            <span class="bnav-label" style="color: white; margin-top: 4px;">Home</span>
+        </button>
+        <button class="bnav-item" onclick="UI.openScanner()" id="tabScan">
+            <span class="bnav-icon">📷</span>
+            <span class="bnav-label">Scan</span>
+        </button>
+        <button class="bnav-item" onclick="UI.switchTab('workstations')" id="tabWorkstations">
+            <span class="bnav-icon">🏭</span>
+            <span class="bnav-label">Machines</span>
+        </button>
+    </nav>
 
     <script src="socket.io/socket.io.js"></script>
     <script src="js/utils.js"></script>

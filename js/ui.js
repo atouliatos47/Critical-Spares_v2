@@ -547,9 +547,16 @@ const UI = {
 
     switchTab(tab) {
         this.currentTab = tab;
-        document.getElementById('tabAdd').classList.toggle('active', tab === 'add');
-        document.getElementById('tabList').classList.toggle('active', tab === 'list');
-        document.getElementById('tabWorkstations').classList.toggle('active', tab === 'workstations');
+        // Update bottom nav active states
+        ['tabAdd', 'tabList', 'tabWorkstations'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('active');
+        });
+        const activeMap = { add: 'tabAdd', list: 'tabList', workstations: 'tabWorkstations' };
+        if (activeMap[tab]) {
+            const el = document.getElementById(activeMap[tab]);
+            if (el) el.classList.add('active');
+        }
         document.getElementById('addView').classList.toggle('hidden', tab !== 'add');
         document.getElementById('listView').classList.toggle('hidden', tab !== 'list');
         document.getElementById('workstationsView').classList.toggle('hidden', tab !== 'workstations');
