@@ -1,5 +1,7 @@
 // Utility Functions
 const Utils = {
+    toastTimeout: null,
+
     escapeHtml(text) {
         if (!text) return '';
         const div = document.createElement('div');
@@ -40,9 +42,17 @@ const Utils = {
 
     showToast(msg, isWarning = false) {
         const toast = document.getElementById('toast');
+        // Clear any existing timeout so overlapping calls don't cancel each other
+        if (this.toastTimeout) {
+            clearTimeout(this.toastTimeout);
+            this.toastTimeout = null;
+        }
         toast.textContent = msg;
         toast.className = `toast ${isWarning ? 'warning' : ''} show`;
-        setTimeout(() => toast.classList.remove('show'), 3000);
+        this.toastTimeout = setTimeout(() => {
+            toast.classList.remove('show');
+            this.toastTimeout = null;
+        }, 3000);
     },
 
     closeModal() {

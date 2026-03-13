@@ -9,6 +9,8 @@ const App = {
         if (this.userName) {
             console.log('User found in localStorage:', this.userName);
             this.showMainApp();
+            // Show home screen as splash on startup
+            setTimeout(() => UI.showHome(), 100);
         } else {
             console.log('No user found, showing name screen');
             document.getElementById('nameScreen').classList.remove('hidden');
@@ -37,12 +39,11 @@ const App = {
     },
 
     setupEventListeners() {
-        // Existing listeners...
         document.getElementById('nameInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.setName();
         });
 
-        // NEW: Auto-select text when clicking into any number input
+        // Auto-select text when clicking into any number input
         document.querySelectorAll('input[type="number"]').forEach(input => {
             input.addEventListener('focus', function() {
                 this.select();

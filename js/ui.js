@@ -1,7 +1,7 @@
 // UI Management
 const UI = {
     currentFilter: 'all',
-    currentTab: 'add',
+    currentTab: '',
     searchTimeout: null,
     scanner: null,
     clockInterval: null,
@@ -13,6 +13,10 @@ const UI = {
         if (screen) {
             screen.classList.remove('hidden');
             this.startClock();
+        }
+        // Clear tab unless user is mid-form on Add Part
+        if (this.currentTab !== 'add') {
+            this.switchTab('');
         }
     },
 
@@ -47,7 +51,7 @@ const UI = {
         const dateEl = document.getElementById('homeDate');
 
         if (clockEl) clockEl.textContent = h + ':' + m;
-        if (secsEl) secsEl.textContent = ':' + s;
+        if (secsEl) secsEl.textContent = '';
         if (dateEl) {
             const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
             const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -557,9 +561,14 @@ const UI = {
             const el = document.getElementById(activeMap[tab]);
             if (el) el.classList.add('active');
         }
-        document.getElementById('addView').classList.toggle('hidden', tab !== 'add');
-        document.getElementById('listView').classList.toggle('hidden', tab !== 'list');
-        document.getElementById('workstationsView').classList.toggle('hidden', tab !== 'workstations');
+        // Hide all views first, then show the selected one
+        ['addView', 'listView', 'workstationsView'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden');
+        });
+        if (tab === 'add') document.getElementById('addView').classList.remove('hidden');
+        if (tab === 'list') document.getElementById('listView').classList.remove('hidden');
+        if (tab === 'workstations') document.getElementById('workstationsView').classList.remove('hidden');
 
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
