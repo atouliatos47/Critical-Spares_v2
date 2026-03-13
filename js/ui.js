@@ -40,10 +40,10 @@ const UI = {
     handleScanResult(barcode) {
         if (navigator.vibrate) navigator.vibrate(100);
 
-        // Find item by name OR check if notes contain the barcode
+        // Find item by barcode (check if notes contain barcode OR if barcode matches)
         const item = API.items.find(i => 
-            i.name.toLowerCase() === barcode.toLowerCase() || 
-            (i.notes && i.notes.includes(barcode))
+            (i.notes && i.notes.includes(barcode)) || // For backward compatibility
+            (i.barcode && i.barcode === barcode)      // New barcode field
         );
 
         this.closeScanner();
@@ -55,14 +55,24 @@ const UI = {
                 Utils.showToast(`Found: ${item.name}`);
             }, 500);
         } else {
-            // NEW ITEM: Switch to Add tab and pre-fill the name
+            // NEW ITEM: Switch to Add tab and pre-fill the barcode field
             this.switchTab('add');
-            const nameInput = document.getElementById('partName');
-            if (nameInput) {
-                nameInput.value = barcode;
-                nameInput.focus();
+            
+            // NEW: Fill the barcode field instead of part name
+            const barcodeField = document.getElementById('partBarcode');
+            const nameField = document.getElementById('partName');
+            
+            if (barcodeField) {
+                barcodeField.value = barcode;
+                barcodeField.readOnly = true; // Keep it read-only after scan
+                
+                // Move focus to part name for easy entry
+                if (nameField) {
+                    nameField.focus();
+                }
             }
-            Utils.showToast("New barcode detected. Please fill in details.");
+            
+            Utils.showToast("New barcode detected. Please enter part name and details.");
         }
     },
 
@@ -118,7 +128,9 @@ const UI = {
         if (searchTerm) {
             filtered = filtered.filter(item => {
                 const wsName = API.getWorkstationName(item.workstationId) || '';
-                return item.name.toLowerCase().includes(searchTerm) ||
+                // UPDATED: Include barcode in search
+                return (item.barcode && item.barcode.toLowerCase().includes(searchTerm)) ||
+                    item.name.toLowerCase().includes(searchTerm) ||
                     (item.location && item.location.toLowerCase().includes(searchTerm)) ||
                     (item.notes && item.notes.toLowerCase().includes(searchTerm)) ||
                     wsName.toLowerCase().includes(searchTerm);
@@ -169,6 +181,10 @@ const UI = {
         const time = Utils.formatTime(item.lastUpdated || item.createdAt);
         const wsName = API.getWorkstationName(item.workstationId);
         
+        // UPDATED: Show barcode if available
+        const barcodeDisplay = item.barcode ? 
+            `<div class="item-barcode" style="font-size: 11px; color: #6b7280; margin-top: 4px; font-family: monospace;">📷 #${Utils.escapeHtml(item.barcode)}</div>` : '';
+        
         return `
             <div class="item-card ${cardClass}">
                 <div class="item-header">
@@ -178,6 +194,7 @@ const UI = {
                         <span class="item-qty ${qtyClass}">${item.quantity}</span>
                     </div>
                 </div>
+                ${barcodeDisplay}
                 <div class="item-meta">
                     ${wsName ? '<span class="ws-tag">🏭 ' + Utils.escapeHtml(wsName) + '</span>' : ''}
                     ${item.location ? '<span>📍 ' + Utils.escapeHtml(item.location) + '</span>' : ''}
@@ -417,16 +434,34 @@ const UI = {
     },
 
     async addItem() {
-        const nameInput = document.getElementById('partName');
-        const name = nameInput.value.trim();
-        if (!name) {
-            Utils.shakeElement(nameInput);
+        // UPDATED: Get barcode value as well
+        const barcodeField = document.getElementById('partBarcode');
+        const nameField = document.getElementById('partName');
+        
+        const barcode = barcodeField ? barcodeField.value.trim() : '';
+        const name = nameField.value.trim();
+        
+        // Validate both fields
+        if (!barcode) {
+            Utils.shakeElement(barcodeField);
+            Utils.showToast('Please scan or enter a Part No.', 3000);
             return;
         }
+        
+        if (!name) {
+            Utils.shakeElement(nameField);
+            Utils.showToast('Please enter a Part Name', 3000);
+            return;
+        }
+        
         Utils.showLoading();
+        
         const wsSelect = document.getElementById('partWorkstation');
         const workstationId = wsSelect && wsSelect.value ? parseInt(wsSelect.value) : null;
+        
+        // UPDATED: Include barcode in item data
         const item = {
+            barcode: barcode,                    // New field
             name: name,
             location: document.getElementById('partLocation').value.trim(),
             quantity: parseInt(document.getElementById('partQty').value) || 1,
@@ -435,14 +470,19 @@ const UI = {
             workstationId: workstationId,
             addedBy: App.userName
         };
+        
         try {
             await API.addItem(item);
-            document.getElementById('partName').value = '';
+            
+            // Clear all fields including barcode
+            if (barcodeField) barcodeField.value = '';
+            nameField.value = '';
             document.getElementById('partLocation').value = '';
             document.getElementById('partQty').value = '1';
             document.getElementById('partMinStock').value = '0';
             document.getElementById('partNotes').value = '';
             if (wsSelect) wsSelect.value = '';
+            
             Utils.showToast('Part added!');
             this.switchTab('list');
         } catch (err) { } finally {

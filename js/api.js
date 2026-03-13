@@ -188,5 +188,14 @@ const API = {
         if (!id) return null;
         const ws = this.workstations.find(w => w.id === id);
         return ws ? ws.name : null;
+    },
+
+    // NEW HELPER: Find item by barcode
+    findItemByBarcode(barcode) {
+        if (!barcode) return null;
+        return this.items.find(item => 
+            item.barcode === barcode || 
+            (item.notes && item.notes.includes(barcode))
+        );
     }
 };

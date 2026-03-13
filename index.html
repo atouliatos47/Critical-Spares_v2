@@ -82,20 +82,39 @@
             <div id="addView">
                 <div class="form-card">
                     <h3 style="margin-bottom: 20px; color: #2D4A5C;">Add Spare Part</h3>
+                    
+                    <!-- NEW: Barcode/Part No. field - read-only but clickable -->
+                    <div class="form-row">
+                        <label>Part No. (Barcode) *</label>
+                        <input type="text" id="partBarcode" placeholder="Scan or enter barcode" 
+                               readonly style="background-color: #f3f4f6; cursor: pointer;" 
+                               onclick="this.readOnly = false; this.focus();">
+                        <small style="color: #6b7280; display: block; margin-top: 4px;">
+                            Click to edit if needed, or use Scan button
+                        </small>
+                    </div>
+
+                    <!-- Part Name field (editable) -->
                     <div class="form-row">
                         <label>Part Name *</label>
                         <input type="text" id="partName" placeholder="e.g. Contactor LC1D25">
                     </div>
+
+                    <!-- Workstation selection -->
                     <div class="form-row">
                         <label>Workstation</label>
                         <select id="partWorkstation" class="form-select">
                             <option value="">— No Workstation —</option>
                         </select>
                     </div>
+
+                    <!-- Location field -->
                     <div class="form-row">
                         <label>Location</label>
                         <input type="text" id="partLocation" placeholder="e.g. Press 4, Bay 2">
                     </div>
+
+                    <!-- Quantity and Min Stock grid -->
                     <div class="form-grid">
                         <div class="form-row">
                             <label>Quantity</label>
@@ -106,10 +125,14 @@
                             <input type="number" id="partMinStock" value="0" min="0">
                         </div>
                     </div>
+
+                    <!-- Notes field -->
                     <div class="form-row">
                         <label>Notes</label>
                         <textarea id="partNotes" rows="2" placeholder="Supplier, part number, etc."></textarea>
                     </div>
+
+                    <!-- Submit button -->
                     <button class="btn-submit" onclick="UI.addItem()">Add to Stock</button>
                 </div>
             </div>
