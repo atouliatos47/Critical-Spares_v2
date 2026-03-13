@@ -9,29 +9,57 @@ const UI = {
 
     openScanner() {
         const modal = document.getElementById('scannerModal');
-        if (modal) modal.classList.add('active'); // Show modal
-        
-        this.scanner = new Html5Qrcode("reader");
-        const config = { fps: 10, qrbox: { width: 250, height: 150 } };
-        
-        this.scanner.start(
-            { facingMode: "environment" }, 
-            config, 
-            (decodedText) => this.handleScanResult(decodedText)
-        ).catch(err => {
-            alert("Camera Error: Please ensure you are using HTTPS and have granted permissions. " + err);
-            this.closeScanner();
-        });
+        if (modal) modal.classList.add('active');
+
+        // Clean up any previous scanner instance
+        if (this.scanner) {
+            try { this.scanner.stop(); } catch (e) {}
+            this.scanner = null;
+        }
+
+        // Small delay so modal is visible before camera init
+        setTimeout(() => {
+            this.scanner = new Html5Qrcode("reader");
+            const config = { 
+                fps: 10, 
+                qrbox: { width: 250, height: 150 },
+                rememberLastUsedCamera: true
+            };
+
+            this.scanner.start(
+                { facingMode: "environment" },
+                config,
+                (decodedText) => this.handleScanResult(decodedText),
+                (errorMessage) => { /* ignore per-frame errors */ }
+            ).catch(err => {
+                alert("Camera Error: Ensure you are on HTTPS and have granted camera permissions.\n\n" + err);
+                this.closeScanner();
+            });
+        }, 300);
     },
 
     closeScanner() {
         const modal = document.getElementById('scannerModal');
-        if (this.scanner && this.scanner.isScanning) {
-            this.scanner.stop().then(() => {
+        
+        if (this.scanner) {
+            try {
+                if (this.scanner.isScanning) {
+                    this.scanner.stop().then(() => {
+                        if (modal) modal.classList.remove('active');
+                        this.scanner = null;
+                    }).catch(() => {
+                        if (modal) modal.classList.remove('active');
+                        this.scanner = null;
+                    });
+                } else {
+                    if (modal) modal.classList.remove('active');
+                    this.scanner = null;
+                }
+            } catch (err) {
+                console.error('Error stopping scanner:', err);
                 if (modal) modal.classList.remove('active');
-            }).catch(() => {
-                if (modal) modal.classList.remove('active');
-            });
+                this.scanner = null;
+            }
         } else {
             if (modal) modal.classList.remove('active');
         }
