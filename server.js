@@ -275,6 +275,24 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
+    // Edit item (all fields)
+    const editMatch = p.pathname.match(/^\/items\/(\d+)\/edit$/);
+    if (editMatch && req.method === 'POST') {
+        try {
+            const b = await getBody(req);
+            const r = await pool.query(
+                `UPDATE items SET part_no=$1, name=$2, location=$3, workstation_id=$4, min_stock=$5, notes=$6, last_updated=NOW()
+                 WHERE id=$7 RETURNING *`,
+                [b.partNo||'', b.name, b.location||'', b.workstationId||null, b.minStock||0, b.notes||'', parseInt(editMatch[1])]
+            );
+            if (!r.rows.length) { res.writeHead(404); return res.end(JSON.stringify({ error: 'Not found' })); }
+            const item = mapItem(r.rows[0]);
+            broadcast('updateItem', item);
+            res.end(JSON.stringify(item));
+        } catch (e) { res.writeHead(400); res.end(JSON.stringify({ error: 'Invalid request' })); }
+        return;
+    }
+
     // Delete item
     const delItemMatch = p.pathname.match(/^\/items\/(\d+)\/delete$/);
     if (delItemMatch && req.method === 'POST') {
