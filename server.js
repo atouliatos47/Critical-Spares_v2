@@ -7,7 +7,7 @@ const os = require('os');
 const PORT = 3000;
 const DATA_DIR = path.join(__dirname, 'data');
 const DB_PATH = path.join(DATA_DIR, 'db.json');
-const PUBLIC_DIR = __dirname;
+const PUBLIC_DIR = __dirname; // CHANGED: Now looks in root directory
 
 let items = [];
 let workstations = [];
@@ -95,6 +95,7 @@ async function serveStaticFile(res, filePath, contentType) {
         res.writeHead(200, { 'Content-Type': contentType });
         res.end(data);
     } catch (err) {
+        console.error(`File not found: ${filePath}`);
         res.writeHead(404);
         res.end('File not found');
     }
@@ -124,9 +125,15 @@ const server = http.createServer(async (req, res) => {
         const imgPath = path.join(PUBLIC_DIR, parsedUrl.pathname);
         try {
             const data = await fs.readFile(imgPath);
-            res.writeHead(200, { 'Content-Type': 'image/png' });
+            // Try to determine content type
+            const ext = path.extname(imgPath).toLowerCase();
+            const contentType = ext === '.png' ? 'image/png' : 
+                               ext === '.jpg' || ext === '.jpeg' ? 'image/jpeg' :
+                               ext === '.gif' ? 'image/gif' : 'image/png';
+            res.writeHead(200, { 'Content-Type': contentType });
             return res.end(data);
         } catch (err) {
+            console.error(`Image not found: ${imgPath}`);
             res.writeHead(404);
             return res.end('Image not found');
         }
@@ -134,7 +141,7 @@ const server = http.createServer(async (req, res) => {
 
     // Serve CSS
     if (parsedUrl.pathname === '/css/style.css') {
-        return serveStaticFile(res, path.join(PUBLIC_DIR, 'css/style.css'), 'text/css');
+        return serveStaticFile(res, path.join(PUBLIC_DIR, 'css', 'style.css'), 'text/css');
     }
 
     // Serve JS files
@@ -163,7 +170,7 @@ const server = http.createServer(async (req, res) => {
             ip: userIP
         });
 
-        // Send initial data (now includes workstations)
+        // Send initial data
         res.write(`event: init\ndata: ${JSON.stringify({ items, workstations })}\n\n`);
         
         // Broadcast updated user list to ALL clients
@@ -189,15 +196,14 @@ const server = http.createServer(async (req, res) => {
         return res.end(JSON.stringify(items));
     }
 
-    // Add item - UPDATED with barcode field
+    // Add item
     if (parsedUrl.pathname === '/items' && req.method === 'POST') {
         try {
             const body = await getBody(req);
             
-            // Create item with barcode field
             const item = {
                 id: nextId++,
-                barcode: body.barcode || '',              // NEW: Store barcode
+                barcode: body.barcode || '',
                 name: body.name,
                 location: body.location || '',
                 workstationId: body.workstationId || null,
@@ -218,6 +224,7 @@ const server = http.createServer(async (req, res) => {
             res.writeHead(201, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify(item));
         } catch (err) {
+            console.error('Error adding item:', err);
             res.writeHead(400);
             res.end(JSON.stringify({ error: 'Invalid JSON' }));
         }
