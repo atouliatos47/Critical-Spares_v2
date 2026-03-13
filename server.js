@@ -11,8 +11,8 @@ const APP_DIR = __dirname;
 // ===== EMAIL ALERTS =====
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const ALERT_RECIPIENTS = [
-    'atouliatos43@gmail.com',
-    'andreast@clamason.com'
+    'atouliatos43@gmail.com'
+    // andreast@clamason.com — add after verifying clamason.com domain in Resend
 ];
 
 async function sendLowStockAlert(item, usedBy) {
