@@ -180,6 +180,7 @@ const server = http.createServer(async (req, res) => {
             const body = await getBody(req);
             const item = {
                 id: nextId++,
+                partNo: body.partNo || '',
                 name: body.name,
                 location: body.location || '',
                 workstationId: body.workstationId || null,

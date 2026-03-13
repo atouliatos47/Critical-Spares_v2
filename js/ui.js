@@ -67,29 +67,32 @@ const UI = {
     handleScanResult(barcode) {
         if (navigator.vibrate) navigator.vibrate(100);
 
-        // Find item by name OR check if notes contain the barcode
-        const item = API.items.find(i => 
-            i.name.toLowerCase() === barcode.toLowerCase() || 
-            (i.notes && i.notes.includes(barcode))
-        );
+        // Match on partNo (barcode) field
+        const item = API.items.find(i => i.partNo && i.partNo === barcode);
 
         this.closeScanner();
 
         if (item) {
-            // ITEM EXISTS: Open the existing Use modal
+            // ITEM EXISTS: Open Use modal
             setTimeout(() => {
                 if (window.Components) Components.showUseModal(item);
                 Utils.showToast(`Found: ${item.name}`);
             }, 500);
         } else {
-            // NEW ITEM: Switch to Add tab and pre-fill the name
+            // NEW ITEM: Switch to Add tab, fill partNo (locked), leave partName empty
             this.switchTab('add');
-            const nameInput = document.getElementById('partName');
-            if (nameInput) {
-                nameInput.value = barcode;
-                nameInput.focus();
+            const partNoInput = document.getElementById('partNo');
+            const partNameInput = document.getElementById('partName');
+            if (partNoInput) {
+                partNoInput.value = barcode;
+                partNoInput.readOnly = true;
+                partNoInput.style.background = '#e8f4f8';
             }
-            Utils.showToast("New barcode detected. Please fill in details.");
+            if (partNameInput) {
+                partNameInput.value = '';
+                setTimeout(() => partNameInput.focus(), 300);
+            }
+            Utils.showToast('New barcode scanned — enter the part name.');
         }
     },
 
@@ -445,6 +448,7 @@ const UI = {
 
     async addItem() {
         const nameInput = document.getElementById('partName');
+        const partNoInput = document.getElementById('partNo');
         const name = nameInput.value.trim();
         if (!name) {
             Utils.shakeElement(nameInput);
@@ -454,6 +458,7 @@ const UI = {
         const wsSelect = document.getElementById('partWorkstation');
         const workstationId = wsSelect && wsSelect.value ? parseInt(wsSelect.value) : null;
         const item = {
+            partNo: partNoInput ? partNoInput.value.trim() : '',
             name: name,
             location: document.getElementById('partLocation').value.trim(),
             quantity: parseInt(document.getElementById('partQty').value) || 1,
@@ -464,6 +469,7 @@ const UI = {
         };
         try {
             await API.addItem(item);
+            if (partNoInput) { partNoInput.value = ''; partNoInput.readOnly = false; partNoInput.style.background = ''; }
             document.getElementById('partName').value = '';
             document.getElementById('partLocation').value = '';
             document.getElementById('partQty').value = '1';
