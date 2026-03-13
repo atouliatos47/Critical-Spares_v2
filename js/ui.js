@@ -353,42 +353,40 @@ const UI = {
         ).join('');
 
         modal.innerHTML = `
-            <div class="modal-header">
-                <h3>✏️ Edit Part</h3>
-                <button class="modal-close" onclick="Utils.closeModal()">✕</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Part Number</label>
-                    <input type="text" id="editPartNo" value="${Utils.escapeHtml(item.partNo || '')}" placeholder="e.g. BRG-6205">
+            <h3>✏️ Edit Part</h3>
+            <p class="modal-sub">${Utils.escapeHtml(item.name)}</p>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px;">
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                    <label style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;">Part Number</label>
+                    <input type="text" id="editPartNo" value="${Utils.escapeHtml(item.partNo || '')}" placeholder="e.g. BRG-6205" style="padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;outline:none;">
                 </div>
-                <div class="form-group">
-                    <label>Part Name *</label>
-                    <input type="text" id="editPartName" value="${Utils.escapeHtml(item.name || '')}" placeholder="Part name">
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                    <label style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;">Part Name *</label>
+                    <input type="text" id="editPartName" value="${Utils.escapeHtml(item.name || '')}" placeholder="Part name" style="padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;outline:none;">
                 </div>
-                <div class="form-group">
-                    <label>Location</label>
-                    <input type="text" id="editLocation" value="${Utils.escapeHtml(item.location || '')}" placeholder="e.g. Shelf A3">
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                    <label style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;">Location</label>
+                    <input type="text" id="editLocation" value="${Utils.escapeHtml(item.location || '')}" placeholder="e.g. Shelf A3" style="padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;outline:none;">
                 </div>
-                <div class="form-group">
-                    <label>Workstation</label>
-                    <select id="editWorkstation">
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                    <label style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;">Workstation</label>
+                    <select id="editWorkstation" style="padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;outline:none;background:white;">
                         <option value="">— No Workstation —</option>
                         ${wsOptions}
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Minimum Stock</label>
-                    <input type="number" id="editMinStock" value="${item.minStock || 0}" min="0">
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                    <label style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;">Minimum Stock</label>
+                    <input type="number" id="editMinStock" value="${item.minStock || 0}" min="0" style="padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;outline:none;">
                 </div>
-                <div class="form-group">
-                    <label>Notes</label>
-                    <textarea id="editNotes" rows="2" placeholder="Optional notes">${Utils.escapeHtml(item.notes || '')}</textarea>
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                    <label style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;">Notes</label>
+                    <textarea id="editNotes" rows="2" placeholder="Optional notes" style="padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;outline:none;resize:vertical;">${Utils.escapeHtml(item.notes || '')}</textarea>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="Utils.closeModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="UI.saveEdit(${item.id})">💾 Save Changes</button>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="Utils.closeModal()">Cancel</button>
+                <button class="modal-btn confirm" onclick="UI.saveEdit(${item.id})">💾 Save Changes</button>
             </div>
         `;
 
