@@ -705,19 +705,34 @@ video { border-radius: 8px; }
 }
 
 .home-logo {
-    height: 44px;
+    height: 130px;
     margin-bottom: 24px;
-    border-radius: 12px;
-    padding: 6px 12px;
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.1);
+    filter: brightness(1.1);
+    border-radius: 24px;
 }
 
 .home-divider {
-    width: 40px; height: 3px;
-    background: linear-gradient(90deg, transparent, #95C11F, transparent);
-    border-radius: 2px;
+    width: 80px; height: 4px;
+    background: transparent;
+    border-radius: 4px;
     margin-bottom: 24px;
+    position: relative;
+}
+.home-divider::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -30px;
+    width: 30px;
+    height: 100%;
+    background: radial-gradient(ellipse at center, #c8ff4e 0%, #95C11F 40%, transparent 100%);
+    border-radius: 4px;
+    box-shadow: 0 0 8px #95C11F, 0 0 16px #95C11F;
+    animation: kitt 1.2s ease-in-out infinite alternate;
+}
+@keyframes kitt {
+    from { left: -30px; }
+    to { left: 80px; }
 }
 
 .home-clock {
