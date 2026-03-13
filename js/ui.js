@@ -408,10 +408,21 @@ const UI = {
             notes:         document.getElementById('editNotes').value.trim()
         };
         try {
-            await API.updateItem(id, data);
+            const res = await fetch(`/items/${id}/edit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (!res.ok) {
+                const err = await res.text();
+                console.error('Edit failed:', err);
+                Utils.showToast('Failed to save: ' + res.status, true);
+                return;
+            }
             Utils.closeModal();
             Utils.showToast('Part updated ✓');
         } catch (e) {
+            console.error('Edit error:', e);
             Utils.showToast('Failed to save changes', true);
         }
     },
