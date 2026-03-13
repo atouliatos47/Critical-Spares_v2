@@ -39,6 +39,14 @@ const App = {
         document.getElementById('nameScreen').classList.add('hidden');
         document.getElementById('appScreen').classList.remove('hidden');
         API.connectSSE(this.userName);
+        this.startKeepAlive();
+    },
+
+    startKeepAlive() {
+        // Ping server every 10 minutes to prevent Render spin-down
+        setInterval(() => {
+            fetch('/items').catch(() => {});
+        }, 10 * 60 * 1000);
     },
 
     setupEventListeners() {
