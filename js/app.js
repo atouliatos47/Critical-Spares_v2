@@ -9,8 +9,11 @@ const App = {
         if (this.userName) {
             console.log('User found in localStorage:', this.userName);
             this.showMainApp();
-            // Show home screen as splash on startup
-            setTimeout(() => UI.showHome(), 100);
+            // Show splash on startup, then start idle timer
+            setTimeout(() => {
+                UI.showHome();
+                UI.startIdleTimer();
+            }, 100);
         } else {
             console.log('No user found, showing name screen');
             document.getElementById('nameScreen').classList.remove('hidden');

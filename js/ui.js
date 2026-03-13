@@ -6,18 +6,29 @@ const UI = {
     scanner: null,
     clockInterval: null,
     scanProcessed: false,
+    idleTimeout: null,
+    IDLE_SECONDS: 20,
 
-    // ===== HOME SCREEN =====
+    // ===== IDLE TIMER =====
+    resetIdleTimer() {
+        if (this.idleTimeout) clearTimeout(this.idleTimeout);
+        this.idleTimeout = setTimeout(() => this.showHome(), this.IDLE_SECONDS * 1000);
+    },
+
+    startIdleTimer() {
+        ['click','touchstart','keydown','scroll'].forEach(evt =>
+            document.addEventListener(evt, () => this.resetIdleTimer(), { passive: true })
+        );
+        this.resetIdleTimer();
+    },
+
+    // ===== HOME SCREEN (splash/screensaver) =====
 
     showHome() {
         const screen = document.getElementById('homeScreen');
         if (screen) {
             screen.classList.remove('hidden');
             this.startClock();
-        }
-        // Clear tab unless user is mid-form on Add Part
-        if (this.currentTab !== 'add') {
-            this.switchTab('');
         }
     },
 
@@ -27,6 +38,13 @@ const UI = {
             screen.classList.add('hidden');
             this.stopClock();
         }
+        this.resetIdleTimer();
+    },
+
+    // ===== HOME BUTTON → goes to dashboard (not splash) =====
+    goToDashboard() {
+        this.switchTab('');
+        this.resetIdleTimer();
     },
 
     startClock() {
