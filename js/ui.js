@@ -5,6 +5,7 @@ const UI = {
     searchTimeout: null,
     scanner: null,
     clockInterval: null,
+    scanProcessed: false,
 
     // ===== HOME SCREEN =====
 
@@ -71,6 +72,9 @@ const UI = {
             this.scanner = null;
         }
 
+        // Reset scan guard
+        this.scanProcessed = false;
+
         // Small delay so modal is visible before camera init
         setTimeout(() => {
             this.scanner = new Html5Qrcode("reader");
@@ -119,6 +123,9 @@ const UI = {
     },
 
     handleScanResult(barcode) {
+        if (this.scanProcessed) return;   // ignore duplicate callbacks while scanner stops
+        this.scanProcessed = true;
+
         if (navigator.vibrate) navigator.vibrate(100);
 
         // Match on partNo (barcode) field
