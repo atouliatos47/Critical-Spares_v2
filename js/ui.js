@@ -19,22 +19,10 @@ const UI = {
 
         // Small delay so modal is visible before camera init
         setTimeout(() => {
-            this.scanner = new Html5Qrcode("reader", {
-                formatsToSupport: [
-                    Html5QrcodeSupportedFormats.QR_CODE,
-                    Html5QrcodeSupportedFormats.CODE_128,
-                    Html5QrcodeSupportedFormats.CODE_39,
-                    Html5QrcodeSupportedFormats.EAN_13,
-                    Html5QrcodeSupportedFormats.EAN_8,
-                    Html5QrcodeSupportedFormats.UPC_A,
-                    Html5QrcodeSupportedFormats.UPC_E,
-                    Html5QrcodeSupportedFormats.DATA_MATRIX
-                ]
-            });
+            this.scanner = new Html5Qrcode("reader");
             const config = { 
                 fps: 10, 
-                qrbox: { width: 250, height: 150 },
-                rememberLastUsedCamera: true
+                qrbox: { width: 250, height: 150 }
             };
 
             this.scanner.start(
