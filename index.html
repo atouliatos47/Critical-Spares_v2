@@ -92,7 +92,10 @@
                     <h3 style="margin-bottom: 20px; color: #2D4A5C;">Add Spare Part</h3>
                     <div class="form-row">
                         <label>Part No. (Barcode)</label>
-                        <input type="text" id="partNo" placeholder="Scan or enter part number" style="background: #f0f2f5;">
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="text" id="partNo" placeholder="Scan or enter part number" style="background: #f0f2f5; flex: 1; margin: 0;">
+                            <button id="clearPartNo" onclick="UI.clearPartNo()" style="display:none; flex-shrink:0; width:36px; height:36px; border-radius:50%; border:none; background:#fee2e2; color:#dc2626; font-size:18px; cursor:pointer; font-weight:700; line-height:1;">✕</button>
+                        </div>
                     </div>
                     <div class="form-row">
                         <label>Part Name *</label>

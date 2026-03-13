@@ -148,6 +148,8 @@ const UI = {
                 partNoInput.value = barcode;
                 partNoInput.readOnly = true;
                 partNoInput.style.background = '#e8f4f8';
+                const clearBtn = document.getElementById('clearPartNo');
+                if (clearBtn) clearBtn.style.display = 'flex';
             }
             if (partNameInput) {
                 partNameInput.value = '';
@@ -155,6 +157,17 @@ const UI = {
             }
             Utils.showToast('New barcode scanned — enter the part name.');
         }
+    },
+
+    clearPartNo() {
+        const partNoInput = document.getElementById('partNo');
+        const clearBtn = document.getElementById('clearPartNo');
+        if (partNoInput) {
+            partNoInput.value = '';
+            partNoInput.readOnly = false;
+            partNoInput.style.background = '#f0f2f5';
+        }
+        if (clearBtn) clearBtn.style.display = 'none';
     },
 
     // ===== INVENTORY RENDERING =====
@@ -531,6 +544,8 @@ const UI = {
         try {
             await API.addItem(item);
             if (partNoInput) { partNoInput.value = ''; partNoInput.readOnly = false; partNoInput.style.background = ''; }
+            const clearBtn = document.getElementById('clearPartNo');
+            if (clearBtn) clearBtn.style.display = 'none';
             document.getElementById('partName').value = '';
             document.getElementById('partLocation').value = '';
             document.getElementById('partQty').value = '1';

@@ -1,18 +1,5 @@
 {
-  "items": [
-    {
-      "id": 2,
-      "name": "12 mm sensors",
-      "location": "U9",
-      "workstationId": 4,
-      "addedBy": "Andreas Touliatos",
-      "quantity": 10,
-      "minStock": 3,
-      "notes": "",
-      "createdAt": "2026-03-12T10:59:24.865Z",
-      "lastUpdated": "2026-03-12T10:59:24.865Z"
-    }
-  ],
+  "items": [],
   "workstations": [
     {
       "id": 3,
