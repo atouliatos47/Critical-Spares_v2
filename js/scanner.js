@@ -26,8 +26,13 @@ const BarcodeScanner = (() => {
         if (e.key.length > 1 && e.key !== 'Enter') return;
         if (['Shift','Control','Alt','Meta','CapsLock','Tab'].includes(e.key)) return;
 
-        // If any modal is open — do nothing at all, let the browser handle it normally
-        if (isModalOpen()) return;
+        // If any modal is open OR a form field is focused — clear buffer and do nothing
+        const active = document.activeElement;
+        if (isModalOpen() || (active && ['INPUT','TEXTAREA','SELECT'].includes(active.tagName))) {
+            clearTimeout(timer);
+            buffer = ''; fastCount = 0;
+            return;
+        }
 
         if (e.key === 'Enter') {
             clearTimeout(timer);
