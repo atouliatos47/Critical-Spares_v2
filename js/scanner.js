@@ -15,9 +15,10 @@ const BarcodeScanner = (() => {
              'ArrowUp','ArrowDown','ArrowLeft','ArrowRight',
              'Escape','F1','F2','F3','F4','F5'].includes(e.key)) return;
 
-        // Let human typing through when a form field is focused
-        const active = document.activeElement;
-        if (active && ['INPUT','TEXTAREA','SELECT'].includes(active.tagName)) {
+        // Disable scanner when any modal is open (user is filling in a form)
+        const modalOpen = document.getElementById('modalOverlay')?.classList.contains('show') ||
+                          document.getElementById('contentModalOverlay')?.classList.contains('show');
+        if (modalOpen) {
             buffer = '';
             return;
         }
