@@ -189,7 +189,7 @@
         <div class="modal" id="modal"></div>
     </div>
 
-    <div class="modal-overlay" id="contentModalOverlay">
+    <div class="modal-overlay" id="contentModalOverlay" style="z-index: 9000;">
         <div class="modal" id="contentModal" style="width:100%; max-width:600px; max-height:85vh; display:flex; flex-direction:column; padding:0; overflow:hidden;"></div>
     </div>
 
@@ -200,7 +200,7 @@
     </div>
 
     <!-- BOTTOM NAV -->
-    <nav class="bottom-nav">
+    <nav class="bottom-nav" style="z-index: 10000;">
         <button class="bnav-item" onclick="Components.showAddModal()" id="tabAdd">
             <span class="bnav-icon">＋</span>
             <span class="bnav-label">Add Part</span>
