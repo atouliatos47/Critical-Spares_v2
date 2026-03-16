@@ -1,4 +1,4 @@
-const CACHE_NAME = 'clamason-spares-v2';
+const CACHE_NAME = 'clamason-spares-v3';
 const ASSETS = [
     '/',
     '/index.html',
