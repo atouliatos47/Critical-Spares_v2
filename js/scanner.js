@@ -1,234 +1,156 @@
 // ============================================================
 //  scanner.js  —  Bluetooth HID Barcode Scanner Support
-//  Works with any scanner paired in keyboard-emulation mode.
-//  Detects rapid keystrokes (scanner) vs slow typing (human).
 // ============================================================
 
 const BarcodeScanner = (() => {
 
-    // --- Config ---
-    const SCAN_SPEED_THRESHOLD_MS = 50;  // chars faster than this = scanner
-    const MIN_BARCODE_LENGTH      = 3;   // ignore very short accidental bursts
-    const SCAN_COMPLETE_TIMEOUT   = 100; // ms after last char to commit scan
+    const SCAN_SPEED_THRESHOLD_MS = 50;
+    const MIN_BARCODE_LENGTH      = 3;
+    const SCAN_COMPLETE_TIMEOUT   = 100;
 
-    // --- State ---
-    let buffer        = '';
-    let lastKeyTime   = 0;
-    let commitTimer   = null;
+    let buffer      = '';
+    let lastKeyTime = 0;
+    let scanCount   = 0; // track consecutive fast chars
 
     // -------------------------------------------------------
-    // Core: handle every keydown on the document
+    // Core keydown handler
     // -------------------------------------------------------
     function onKeyDown(e) {
-
-        // Ignore modifier-only keypresses
         if (['Shift','Control','Alt','Meta','CapsLock','Tab'].includes(e.key)) return;
 
-        // Enter = end of scan (scanners always terminate with Enter)
         if (e.key === 'Enter') {
-            if (buffer.length >= MIN_BARCODE_LENGTH) {
-                clearTimeout(commitTimer);
+            if (buffer.length >= MIN_BARCODE_LENGTH && scanCount >= MIN_BARCODE_LENGTH) {
+                clearTimeout(BarcodeScanner._timer);
                 commitScan(buffer);
             }
-            buffer = '';
+            buffer    = '';
+            scanCount = 0;
             return;
         }
 
+        if (e.key.length !== 1) return;
+
         const now = Date.now();
-        const gap = now - lastKeyTime;
+        const gap = lastKeyTime === 0 ? 0 : (now - lastKeyTime);
         lastKeyTime = now;
 
-        // If gap is too long this is probably human typing — reset buffer
-        if (gap > SCAN_SPEED_THRESHOLD_MS * 3 && buffer.length > 0) {
-            // Only reset if the target input is NOT a known form field
-            // (let human typing pass through to inputs normally)
-            if (!isFormFieldFocused()) {
-                buffer = '';
-            } else {
-                buffer = '';
-                return; // let human input go to the field as normal
+        if (gap > 0 && gap < SCAN_SPEED_THRESHOLD_MS) {
+            // Fast keystroke — scanner territory
+            scanCount++;
+        } else {
+            // Slow / first keystroke — could be human, reset fast-char counter
+            scanCount = 0;
+        }
+
+        buffer += e.key;
+
+        clearTimeout(BarcodeScanner._timer);
+        BarcodeScanner._timer = setTimeout(() => {
+            // Only commit if most chars came in fast (scanner, not human)
+            if (buffer.length >= MIN_BARCODE_LENGTH && scanCount >= MIN_BARCODE_LENGTH - 1) {
+                commitScan(buffer);
             }
-        }
-
-        // Accumulate character
-        if (e.key.length === 1) {   // printable characters only
-            buffer += e.key;
-
-            // Intercept keypress from form fields only when scanning fast
-            // (gap < threshold means it's a scanner burst)
-            if (gap < SCAN_SPEED_THRESHOLD_MS && isFormFieldFocused()) {
-                // We're building a scan — but let it type into the field too.
-                // The commitScan will overwrite with the clean buffer anyway.
-            }
-        }
-
-        // Reset the commit timer on every new character
-        clearTimeout(commitTimer);
-        if (buffer.length >= MIN_BARCODE_LENGTH) {
-            commitTimer = setTimeout(() => {
-                if (buffer.length >= MIN_BARCODE_LENGTH) {
-                    commitScan(buffer);
-                }
-                buffer = '';
-            }, SCAN_COMPLETE_TIMEOUT);
-        }
+            buffer    = '';
+            scanCount = 0;
+        }, SCAN_COMPLETE_TIMEOUT);
     }
 
     // -------------------------------------------------------
-    // Decide what to do with a completed scan
+    // Route the completed scan
     // -------------------------------------------------------
     function commitScan(barcode) {
         barcode = barcode.trim();
         if (!barcode) return;
-
         console.log(`[Scanner] Scanned: "${barcode}"`);
 
-        // 1️⃣  "Use Item" modal is open — fill the quantity confirm field if present
-        const useModal = document.getElementById('useModal');
-        if (useModal && !useModal.closest('.modal-overlay')?.classList.contains('hidden')) {
-            // Modal is open — nothing to fill with a barcode here, ignore
-            return;
-        }
+        // Wake app if on splash/home screen
+        wakeApp();
 
-        // 2️⃣  Add Part tab is active — fill the Part No. field
-        const addView = document.getElementById('addView');
-        if (addView && !addView.classList.contains('hidden')) {
-            fillPartNo(barcode);
-            return;
-        }
-
-        // 3️⃣  Stock List tab is active — find item and open Use modal
-        const listView = document.getElementById('listView');
-        if (listView && !listView.classList.contains('hidden')) {
-            triggerUseByBarcode(barcode);
-            return;
-        }
-
-        // 4️⃣  Fallback: if search box exists and is visible, put it there
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput && isVisible(searchInput)) {
-            searchInput.value = barcode;
-            searchInput.dispatchEvent(new Event('keyup'));
-        }
-    }
-
-    // -------------------------------------------------------
-    // Fill the Part No. field in the Add Part form
-    // -------------------------------------------------------
-    function fillPartNo(barcode) {
-        const field = document.getElementById('partNo');
-        if (!field) return;
-
-        field.value = barcode;
-        field.dispatchEvent(new Event('input'));
-
-        // Show the clear button if it exists
-        const clearBtn = document.getElementById('clearPartNo');
-        if (clearBtn) clearBtn.style.display = 'flex';
-
-        // Highlight briefly to give visual feedback
-        field.style.transition = 'background 0.3s';
-        field.style.background = '#d1fae5';   // green flash
-        setTimeout(() => { field.style.background = '#f0f2f5'; }, 600);
-
-        // Move focus to Part Name so user can keep filling the form
-        const nameField = document.getElementById('partName');
-        if (nameField) setTimeout(() => nameField.focus(), 100);
-
-        showScanToast(`Scanned: ${barcode}`);
-    }
-
-    // -------------------------------------------------------
-    // Find an item by part_no and open the Use modal
-    // -------------------------------------------------------
-    function triggerUseByBarcode(barcode) {
-        // Items live in API.items (populated via SSE in api.js)
+        // Look up item
         const items = (window.API && window.API.items) ? window.API.items : [];
-
-        if (!items || items.length === 0) {
-            showScanToast('⚠️ No items loaded yet', 'warn');
-            return;
-        }
-
         const match = items.find(i =>
             i.partNo && i.partNo.trim().toLowerCase() === barcode.toLowerCase()
         );
 
-        if (!match) {
-            showScanToast(`❌ No part found: ${barcode}`, 'warn');
-            // Also populate the search box so user can see results
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) {
-                searchInput.value = barcode;
-                searchInput.dispatchEvent(new Event('keyup'));
-            }
-            return;
-        }
-
-        showScanToast(`✅ Found: ${match.name}`);
-
-        // Call UI.openUseModal if it exists (defined in ui.js)
-        if (window.UI && typeof window.UI.openUseModal === 'function') {
-            setTimeout(() => window.UI.openUseModal(match.id), 150);
+        if (match) {
+            showToast(`✅ Found: ${match.name}`);
+            setTimeout(() => {
+                if (window.UI && typeof window.UI.openUseModal === 'function') {
+                    window.UI.openUseModal(match.id);
+                }
+            }, 200);
         } else {
-            // Fallback: highlight the item row
-            const row = document.querySelector(`[data-id="${match.id}"]`);
-            if (row) {
-                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                row.style.outline = '3px solid #95C11F';
-                setTimeout(() => row.style.outline = '', 1500);
+            showToast(`📦 New part scanned — add details`);
+            if (window.UI && typeof window.UI.switchTab === 'function') {
+                window.UI.switchTab('add');
+            }
+            setTimeout(() => fillPartNo(barcode), 250);
+        }
+    }
+
+    // -------------------------------------------------------
+    // Wake from splash/home screen
+    // -------------------------------------------------------
+    function wakeApp() {
+        const homeScreen = document.getElementById('homeScreen');
+        if (homeScreen && !homeScreen.classList.contains('hidden')) {
+            homeScreen.classList.add('hidden');
+            if (window.UI && typeof window.UI.startIdleTimer === 'function') {
+                window.UI.startIdleTimer();
             }
         }
     }
 
     // -------------------------------------------------------
-    // Small toast specific to scanner events
+    // Fill Part No. field
     // -------------------------------------------------------
-    function showScanToast(msg, type = 'success') {
-        // Reuse the app's existing toast if available
-        if (window.UI && typeof window.UI.toast === 'function') {
-            window.UI.toast(msg);
-            return;
+    function fillPartNo(barcode) {
+        const field = document.getElementById('partNo');
+        if (!field) return;
+        field.value = barcode;
+        field.dispatchEvent(new Event('input'));
+        const clearBtn = document.getElementById('clearPartNo');
+        if (clearBtn) clearBtn.style.display = 'flex';
+        field.style.transition = 'background 0.3s';
+        field.style.background = '#d1fae5';
+        setTimeout(() => { field.style.background = '#f0f2f5'; }, 700);
+        const nameField = document.getElementById('partName');
+        if (nameField) setTimeout(() => nameField.focus(), 150);
+    }
+
+    // -------------------------------------------------------
+    // Toast — works with any Utils.showToast signature
+    // -------------------------------------------------------
+    function showToast(msg) {
+        // Try Utils first (most common signature)
+        if (window.Utils && typeof window.Utils.showToast === 'function') {
+            try { window.Utils.showToast(msg); return; } catch(e) {}
         }
-        // Fallback: use the #toast element directly
+        // Fallback: directly manipulate the toast element
         const t = document.getElementById('toast');
         if (!t) return;
         t.textContent = msg;
-        t.style.background = type === 'warn' ? '#ef4444' : '#95C11F';
+        t.style.background = '#95C11F';
+        t.style.color = '#fff';
+        t.style.display = 'block';
+        t.style.opacity = '1';
         t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 2500);
+        setTimeout(() => {
+            t.classList.remove('show');
+            t.style.opacity = '';
+        }, 2500);
     }
 
     // -------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------
-    function isFormFieldFocused() {
-        const el = document.activeElement;
-        if (!el) return false;
-        return ['INPUT','TEXTAREA','SELECT'].includes(el.tagName);
-    }
-
-    function isVisible(el) {
-        return el && el.offsetParent !== null;
-    }
-
-    // -------------------------------------------------------
-    // Public API
+    // Init
     // -------------------------------------------------------
     function init() {
         document.addEventListener('keydown', onKeyDown, true);
         console.log('[Scanner] Bluetooth HID scanner listener active');
     }
 
-    // Allow app.js to expose the items array to the scanner
-    function setItemsSource(fn) {
-        window.App = window.App || {};
-        window.App.getItems = fn;
-    }
-
-    return { init, setItemsSource };
+    return { init };
 
 })();
 
-// Auto-init on DOM ready
 document.addEventListener('DOMContentLoaded', () => BarcodeScanner.init());
