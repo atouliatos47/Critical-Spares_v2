@@ -1,79 +1,71 @@
 // ============================================================
-//  scanner.js — Bluetooth HID Barcode Scanner Support v3
+//  scanner.js — Bluetooth HID Barcode Scanner v4
 // ============================================================
 
 const BarcodeScanner = (() => {
 
-    const MIN_BARCODE_LENGTH  = 3;
-    const CHAR_SPEED_MS       = 50;   // scanner chars are faster than this
-    const COMMIT_TIMEOUT_MS   = 120;  // ms after last char before auto-commit
+    const MIN_LENGTH     = 3;
+    const COMMIT_TIMEOUT = 120;
 
-    let buffer    = '';
-    let lastTime  = 0;
-    let fastChars = 0;
-    let timer     = null;
+    let buffer = '';
+    let timer  = null;
 
     function onKeyDown(e) {
-        if (['Shift','Control','Alt','Meta','CapsLock','Tab','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) return;
+        if (['Shift','Control','Alt','Meta','CapsLock','Tab',
+             'ArrowUp','ArrowDown','ArrowLeft','ArrowRight',
+             'Escape','F1','F2','F3','F4','F5'].includes(e.key)) return;
 
-        // Enter = scanner terminator — commit whatever is in buffer
+        // Enter = commit immediately
         if (e.key === 'Enter') {
             clearTimeout(timer);
-            const b = buffer;
-            const fc = fastChars;
-            buffer = ''; fastChars = 0; lastTime = 0;
-            if (b.length >= MIN_BARCODE_LENGTH && fc >= MIN_BARCODE_LENGTH - 1) {
-                commitScan(b.trim());
-            }
+            const b = buffer.trim();
+            buffer = '';
+            if (b.length >= MIN_LENGTH) commitScan(b);
             return;
         }
 
         if (e.key.length !== 1) return;
 
-        const now = Date.now();
-        const gap = lastTime ? now - lastTime : 999;
-        lastTime = now;
-
-        if (gap < CHAR_SPEED_MS) fastChars++;
-        else fastChars = 0;
-
         buffer += e.key;
 
+        // Also commit via timeout (scanners that don't send Enter)
         clearTimeout(timer);
         timer = setTimeout(() => {
-            const b = buffer; buffer = ''; fastChars = 0; lastTime = 0;
-            if (b.trim().length >= MIN_BARCODE_LENGTH) commitScan(b.trim());
-        }, COMMIT_TIMEOUT_MS);
+            const b = buffer.trim();
+            buffer = '';
+            if (b.length >= MIN_LENGTH) commitScan(b);
+        }, COMMIT_TIMEOUT);
     }
 
     function commitScan(barcode) {
-        if (!barcode) return;
-        console.log('[Scanner] Commit:', barcode);
+        console.log('[Scanner] Scanned:', barcode);
 
-        // 1. Wake from splash
+        // Wake from splash screen
         const home = document.getElementById('homeScreen');
         if (home && !home.classList.contains('hidden')) {
             home.classList.add('hidden');
         }
 
-        // 2. Wait for app to be ready, then route
-        setTimeout(() => route(barcode), 100);
+        setTimeout(() => route(barcode), 150);
     }
 
     function route(barcode) {
         const items = (window.API && window.API.items) ? window.API.items : [];
-        const match = items.find(i =>
-            i.partNo && i.partNo.trim().toLowerCase() === barcode.toLowerCase()
-        );
+        console.log('[Scanner] Looking up in', items.length, 'items');
+
+        const match = items.find(i => {
+            const pn = (i.partNo || '').trim().toLowerCase();
+            return pn !== '' && pn === barcode.toLowerCase();
+        });
 
         if (match) {
-            // Known item — open Use modal
+            console.log('[Scanner] Match found:', match.name);
             toast('Found: ' + match.name);
             if (window.Components && typeof window.Components.showUseModal === 'function') {
                 window.Components.showUseModal(match);
             }
         } else {
-            // Unknown — go to Add Part, fill field
+            console.log('[Scanner] No match — going to Add Part');
             toast('New barcode — fill in details');
             if (window.UI && typeof window.UI.switchTab === 'function') {
                 window.UI.switchTab('add');
@@ -106,7 +98,7 @@ const BarcodeScanner = (() => {
 
     function init() {
         document.addEventListener('keydown', onKeyDown, true);
-        console.log('[Scanner] v3 ready');
+        console.log('[Scanner] v4 ready');
     }
 
     return { init };
