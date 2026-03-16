@@ -51,7 +51,7 @@ const BarcodeScanner = (() => {
 
     function route(barcode, attempt) {
         attempt = attempt || 1;
-        const items = (window.API && window.API.items) ? window.API.items : [];
+        const items = (typeof API !== 'undefined' && API.items) ? API.items : [];
         console.log('[Scanner] Looking up in', items.length, 'items (attempt', attempt + ')');
 
         // Items not loaded yet — retry up to 5 times
