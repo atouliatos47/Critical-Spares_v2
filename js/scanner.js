@@ -65,13 +65,24 @@ const BarcodeScanner = (() => {
             return pn !== '' && pn === barcode.toLowerCase();
         });
 
-        if (match) {
+        const needsRestock = match && (match.quantity === 0 || (match.minStock > 0 && match.quantity <= match.minStock));
+
+        if (match && !needsRestock) {
+            // Known item with healthy stock — open Use modal
             console.log('[Scanner] Match found:', match.name);
             toast('Found: ' + match.name);
-            if (window.Components && typeof window.Components.showUseModal === 'function') {
-                window.Components.showUseModal(match);
+            if (typeof Components !== 'undefined' && typeof Components.showUseModal === 'function') {
+                Components.showUseModal(match);
+            }
+        } else if (needsRestock) {
+            // Out of stock OR at/below minimum — treat as new delivery
+            console.log('[Scanner] Low/no stock — opening Add Part modal');
+            toast('Low stock — scan to restock');
+            if (typeof Components !== 'undefined' && typeof Components.showAddModal === 'function') {
+                Components.showAddModal(barcode);
             }
         } else {
+            // Unknown barcode — open Add Part modal
             console.log('[Scanner] No match — opening Add Part modal');
             if (typeof Components !== 'undefined' && typeof Components.showAddModal === 'function') {
                 Components.showAddModal(barcode);
