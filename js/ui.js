@@ -43,6 +43,13 @@ const UI = {
 
     // ===== HOME BUTTON → goes to dashboard (not splash) =====
     goToDashboard() {
+        // If a content modal is open, close it instead of going to dashboard
+        const contentOverlay = document.getElementById('contentModalOverlay');
+        if (contentOverlay && contentOverlay.classList.contains('show')) {
+            contentOverlay.classList.remove('show');
+            this.resetIdleTimer();
+            return;
+        }
         this.switchTab('');
         this.resetIdleTimer();
     },

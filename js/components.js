@@ -252,7 +252,7 @@ const Components = {
         modal.innerHTML = `
             <div style="padding:16px 20px; border-bottom:1px solid #e2e5ea; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
                 <h3 style="margin:0; color:#2D4A5C;">📦 Stock</h3>
-                <button onclick="Components.closeContentModal()" style="border:none;background:none;font-size:22px;cursor:pointer;color:#6b7280;">✕</button>
+                
             </div>
             <div style="padding:12px 20px; border-bottom:1px solid #e2e5ea; flex-shrink:0; display:flex; flex-direction:column; gap:10px;">
                 <div style="display:flex; gap:8px;">
@@ -323,7 +323,7 @@ const Components = {
         modal.innerHTML = `
             <div style="padding:16px 20px; border-bottom:1px solid #e2e5ea; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
                 <h3 style="margin:0; color:#2D4A5C;">🏭 Machines</h3>
-                <button onclick="Components.closeContentModal()" style="border:none;background:none;font-size:22px;cursor:pointer;color:#6b7280;">✕</button>
+                
             </div>
             <div style="padding:12px 20px; border-bottom:1px solid #e2e5ea; flex-shrink:0; display:flex; flex-direction:column; gap:10px;">
                 <div style="display:flex; gap:8px;">
