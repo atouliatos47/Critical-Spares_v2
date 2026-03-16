@@ -110,7 +110,7 @@ const BarcodeScanner = (() => {
     }
 
     function init() {
-        document.addEventListener('keydown', onKeyDown, true);
+        document.addEventListener('keydown', onKeyDown, false);
         console.log('[Scanner] v4 ready');
     }
 
