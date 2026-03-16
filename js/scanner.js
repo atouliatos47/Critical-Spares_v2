@@ -49,9 +49,16 @@ const BarcodeScanner = (() => {
         setTimeout(() => route(barcode), 150);
     }
 
-    function route(barcode) {
+    function route(barcode, attempt) {
+        attempt = attempt || 1;
         const items = (window.API && window.API.items) ? window.API.items : [];
-        console.log('[Scanner] Looking up in', items.length, 'items');
+        console.log('[Scanner] Looking up in', items.length, 'items (attempt', attempt + ')');
+
+        // Items not loaded yet — retry up to 5 times
+        if (items.length === 0 && attempt < 6) {
+            setTimeout(() => route(barcode, attempt + 1), 500);
+            return;
+        }
 
         const match = items.find(i => {
             const pn = (i.partNo || '').trim().toLowerCase();
