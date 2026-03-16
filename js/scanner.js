@@ -69,8 +69,8 @@ const BarcodeScanner = (() => {
         if (match) {
             // Known item — open Use modal
             toast('Found: ' + match.name);
-            if (window.UI && typeof window.UI.openUseModal === 'function') {
-                window.UI.openUseModal(match.id);
+            if (window.Components && typeof window.Components.showUseModal === 'function') {
+                window.Components.showUseModal(match);
             }
         } else {
             // Unknown — go to Add Part, fill field
