@@ -8,7 +8,7 @@ const Components = {
             <div class="modal-sub">${Utils.escapeHtml(item.name)} — Current stock: ${item.quantity}</div>
             <div class="form-row">
                 <label>How many used?</label>
-                <input type="number" id="useAmount" value="1" min="1" max="${item.quantity}" style="width: 100%; padding: 12px; border: 2px solid #e2e5ea; border-radius: 8px;">
+                <input type="number" id="useAmount" value="1" min="1" onfocus="this.select()" max="${item.quantity}" style="width: 100%; padding: 12px; border: 2px solid #e2e5ea; border-radius: 8px;">
             </div>
             <div class="modal-actions">
                 <button class="modal-btn cancel" onclick="Components.closeUseModal()">Cancel</button>
@@ -44,7 +44,7 @@ const Components = {
             <div class="modal-sub">${Utils.escapeHtml(item.name)} — Current stock: ${item.quantity}</div>
             <div class="form-row">
                 <label>How many to add?</label>
-                <input type="number" id="restockAmount" value="1" min="1" style="width: 100%; padding: 12px; border: 2px solid #e2e5ea; border-radius: 8px;">
+                <input type="number" id="restockAmount" value="1" min="1" onfocus="this.select()" style="width: 100%; padding: 12px; border: 2px solid #e2e5ea; border-radius: 8px;">
             </div>
             <div class="modal-actions">
                 <button class="modal-btn cancel" onclick="Components.closeRestockModal()">Cancel</button>
@@ -232,12 +232,12 @@ const Components = {
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                 <div class="form-row">
                     <label>Quantity</label>
-                    <input type="number" id="modalPartQty" value="1" min="0"
+                    <input type="number" id="modalPartQty" value="1" min="0" onfocus="this.select()"
                         style="width: 100%; padding: 12px; border: 2px solid #e2e5ea; border-radius: 8px;">
                 </div>
                 <div class="form-row">
                     <label>Min Stock</label>
-                    <input type="number" id="modalPartMinStock" value="0" min="0"
+                    <input type="number" id="modalPartMinStock" value="0" min="0" onfocus="this.select()"
                         style="width: 100%; padding: 12px; border: 2px solid #e2e5ea; border-radius: 8px;">
                 </div>
             </div>
@@ -297,6 +297,169 @@ const Components = {
         }
     }
 };
+
+
+    // ===== STOCK MODAL =====
+
+    showStockModal() {
+        const overlay = document.getElementById('contentModalOverlay');
+        const modal   = document.getElementById('contentModal');
+        if (!overlay || !modal) return;
+
+        modal.innerHTML = `
+            <div style="padding: 16px 20px; border-bottom: 1px solid #e2e5ea; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
+                <h3 style="margin:0; color:#2D4A5C;">📦 Stock</h3>
+                <button onclick="Components.closeContentModal()" style="border:none; background:none; font-size:22px; cursor:pointer; color:#6b7280; line-height:1;">✕</button>
+            </div>
+            <div style="padding: 12px 20px; border-bottom: 1px solid #e2e5ea; flex-shrink:0; display:flex; flex-direction:column; gap:10px;">
+                <div style="display:flex; gap:8px;">
+                    <button id="stockFilterAll" class="filter-btn active" onclick="Components._stockFilter('all')">All</button>
+                    <button id="stockFilterLow" class="filter-btn danger" onclick="Components._stockFilter('low')">Low Stock</button>
+                </div>
+                <input type="text" id="stockSearch" placeholder="🔍 Search parts or workstations..."
+                    oninput="Components._renderStock()"
+                    style="width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; box-sizing:border-box;">
+            </div>
+            <div id="stockModalList" style="overflow-y:auto; flex:1; padding:16px 20px;"></div>
+        `;
+
+        overlay.classList.add('show');
+        Components._currentStockFilter = 'all';
+        Components._renderStock();
+    },
+
+    _currentStockFilter: 'all',
+
+    _stockFilter(f) {
+        Components._currentStockFilter = f;
+        document.getElementById('stockFilterAll')?.classList.toggle('active', f === 'all');
+        document.getElementById('stockFilterLow')?.classList.toggle('active', f === 'low');
+        Components._renderStock();
+    },
+
+    _renderStock() {
+        const container = document.getElementById('stockModalList');
+        if (!container) return;
+
+        const searchTerm = (document.getElementById('stockSearch')?.value || '').toLowerCase();
+        const filter     = Components._currentStockFilter;
+
+        let items = API.items;
+        if (filter === 'low') items = items.filter(i => i.minStock > 0 && i.quantity <= i.minStock);
+        if (searchTerm) {
+            items = items.filter(i => {
+                const wsName = API.getWorkstationName(i.workstationId) || '';
+                return i.name.toLowerCase().includes(searchTerm) ||
+                    (i.location || '').toLowerCase().includes(searchTerm) ||
+                    wsName.toLowerCase().includes(searchTerm);
+            });
+        }
+
+        if (items.length === 0) {
+            container.innerHTML = `<div class="empty-state"><div class="icon">${filter === 'low' ? '✅' : '📋'}</div><p>${filter === 'low' ? 'No low stock items!' : 'No items found'}</p></div>`;
+            return;
+        }
+
+        const groups = items.reduce((acc, item) => {
+            const ws = API.getWorkstationName(item.workstationId) || 'Unassigned / General';
+            if (!acc[ws]) acc[ws] = [];
+            acc[ws].push(item);
+            return acc;
+        }, {});
+
+        container.innerHTML = Object.keys(groups).sort().map(ws => {
+            const wsItems = groups[ws].sort((a,b) => a.name.localeCompare(b.name));
+            return \`
+                <div style="margin-bottom:20px;">
+                    <div style="background:#e2e5ea; padding:8px 12px; border-radius:8px; margin-bottom:10px; font-weight:700; color:#2D4A5C; font-size:13px; display:flex; justify-content:space-between;">
+                        <span>🏭 \${ws}</span>
+                        <span style="font-size:11px; opacity:0.7;">\${wsItems.length} item\${wsItems.length !== 1 ? 's' : ''}</span>
+                    </div>
+                    \${wsItems.map(item => UI.renderItemCard(item)).join('')}
+                </div>
+            \`;
+        }).join('');
+    },
+
+    // ===== MACHINES MODAL =====
+
+    showMachinesModal() {
+        const overlay = document.getElementById('contentModalOverlay');
+        const modal   = document.getElementById('contentModal');
+        if (!overlay || !modal) return;
+
+        const wsOptions = API.workstations.map(ws =>
+            `<option value="${ws.id}">${Utils.escapeHtml(ws.name)}</option>`
+        ).join('');
+
+        modal.innerHTML = `
+            <div style="padding:16px 20px; border-bottom:1px solid #e2e5ea; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
+                <h3 style="margin:0; color:#2D4A5C;">🏭 Machines</h3>
+                <button onclick="Components.closeContentModal()" style="border:none; background:none; font-size:22px; cursor:pointer; color:#6b7280; line-height:1;">✕</button>
+            </div>
+            <div style="padding:12px 20px; border-bottom:1px solid #e2e5ea; flex-shrink:0; display:flex; flex-direction:column; gap:12px;">
+                <div>
+                    <label style="font-size:12px; font-weight:600; color:#6b7280; text-transform:uppercase; display:block; margin-bottom:6px;">Add Workstation</label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="modalWsName" placeholder="Workstation name *"
+                            style="flex:1; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px;">
+                        <input type="text" id="modalWsDesc" placeholder="Description"
+                            style="flex:1; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px;">
+                        <button class="btn-submit" onclick="Components._addWorkstation()" style="padding:10px 16px; white-space:nowrap;">Add</button>
+                    </div>
+                </div>
+                <select id="modalWsSelect" class="form-select" onchange="Components._renderMachines()">
+                    <option value="">— Select a Workstation —</option>
+                    ${wsOptions}
+                </select>
+            </div>
+            <div id="machinesModalList" style="overflow-y:auto; flex:1; padding:16px 20px;">
+                <div class="empty-state"><div class="icon">🏭</div><p>Select a workstation above</p></div>
+            </div>
+        `;
+
+        overlay.classList.add('show');
+    },
+
+    _renderMachines() {
+        const container = document.getElementById('machinesModalList');
+        const wsId = document.getElementById('modalWsSelect')?.value;
+        if (!container) return;
+        if (!wsId) {
+            container.innerHTML = '<div class="empty-state"><div class="icon">🏭</div><p>Select a workstation above</p></div>';
+            return;
+        }
+        const ws = API.workstations.find(w => w.id == wsId);
+        if (ws) container.innerHTML = UI.renderSingleWorkstationCard(ws);
+    },
+
+    async _addWorkstation() {
+        const nameInput = document.getElementById('modalWsName');
+        const name = nameInput?.value.trim();
+        if (!name) { Utils.shakeElement(nameInput); return; }
+        Utils.showLoading();
+        try {
+            await API.addWorkstation({
+                name,
+                description: document.getElementById('modalWsDesc')?.value.trim() || '',
+                addedBy: App.userName
+            });
+            nameInput.value = '';
+            document.getElementById('modalWsDesc').value = '';
+            Utils.showToast('Workstation added!');
+            // Refresh the select options
+            Components.closeContentModal();
+            setTimeout(() => Components.showMachinesModal(), 100);
+        } catch(e) {
+            Utils.showToast('Error adding workstation', true);
+        } finally {
+            Utils.hideLoading();
+        }
+    },
+
+    closeContentModal() {
+        document.getElementById('contentModalOverlay').classList.remove('show');
+    },
 
 // Make Components globally available
 window.Components = Components;
