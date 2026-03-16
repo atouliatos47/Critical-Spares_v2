@@ -1,4 +1,4 @@
-const CACHE_NAME = 'clamason-spares-v1';
+const CACHE_NAME = 'clamason-spares-v2';
 const ASSETS = [
     '/',
     '/index.html',
@@ -8,6 +8,7 @@ const ASSETS = [
     '/js/ui.js',
     '/js/components.js',
     '/js/utils.js',
+    '/js/scanner.js',
     '/img/logo.png'
 ];
 
