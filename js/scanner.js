@@ -74,10 +74,19 @@ const BarcodeScanner = (() => {
             (i.partNo || '').trim().toLowerCase() === barcode.toLowerCase() && i.partNo !== ''
         );
 
-        if (match) {
+        const needsRestock = match && (
+            match.quantity === 0 ||
+            (match.minStock > 0 && match.quantity <= match.minStock)
+        );
+
+        if (match && !needsRestock) {
             console.log('[Scanner] Match found:', match.name);
             toast('Found: ' + match.name);
             if (typeof Components !== 'undefined') Components.showUseModal(match);
+        } else if (needsRestock) {
+            console.log('[Scanner] Low/no stock — opening Restock modal');
+            toast('Low stock: ' + match.name);
+            if (typeof Components !== 'undefined') Components.showRestockModal(match);
         } else {
             console.log('[Scanner] New barcode — opening Add modal');
             if (typeof Components !== 'undefined') Components.showAddModal(barcode);
