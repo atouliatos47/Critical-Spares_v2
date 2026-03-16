@@ -192,6 +192,109 @@ const Components = {
 
     closeStatsModal() {
         document.getElementById('modalOverlay').classList.remove('show');
+    },
+
+    // ===== ADD PART MODAL =====
+
+    showAddModal(barcode) {
+        const workstationOptions = API.workstations.map(ws =>
+            `<option value="${ws.id}">${Utils.escapeHtml(ws.name)}</option>`
+        ).join('');
+
+        const modal = document.getElementById('modal');
+        modal.innerHTML = `
+            <h3>Add Spare Part</h3>
+            <div class="form-row">
+                <label>Part No. (Barcode)</label>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <input type="text" id="modalPartNo" placeholder="Scan or enter part number"
+                        value="${barcode ? Utils.escapeHtml(barcode) : ''}"
+                        style="flex: 1; padding: 12px; border: 2px solid ${barcode ? '#86efac' : '#e2e5ea'}; border-radius: 8px; background: ${barcode ? '#f0fdf4' : '#f0f2f5'};">
+                </div>
+            </div>
+            <div class="form-row">
+                <label>Part Name *</label>
+                <input type="text" id="modalPartName" placeholder="e.g. Contactor LC1D25"
+                    style="width: 100%; padding: 12px; border: 2px solid #e2e5ea; border-radius: 8px;">
+            </div>
+            <div class="form-row">
+                <label>Workstation</label>
+                <select id="modalPartWorkstation" class="form-select">
+                    <option value="">— No Workstation —</option>
+                    ${workstationOptions}
+                </select>
+            </div>
+            <div class="form-row">
+                <label>Location</label>
+                <input type="text" id="modalPartLocation" placeholder="e.g. Press 4, Bay 2"
+                    style="width: 100%; padding: 12px; border: 2px solid #e2e5ea; border-radius: 8px;">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-row">
+                    <label>Quantity</label>
+                    <input type="number" id="modalPartQty" value="1" min="0"
+                        style="width: 100%; padding: 12px; border: 2px solid #e2e5ea; border-radius: 8px;">
+                </div>
+                <div class="form-row">
+                    <label>Min Stock</label>
+                    <input type="number" id="modalPartMinStock" value="0" min="0"
+                        style="width: 100%; padding: 12px; border: 2px solid #e2e5ea; border-radius: 8px;">
+                </div>
+            </div>
+            <div class="form-row">
+                <label>Notes</label>
+                <textarea id="modalPartNotes" rows="2" placeholder="Supplier, part number, etc."
+                    style="width: 100%; padding: 12px; border: 2px solid #e2e5ea; border-radius: 8px; resize: vertical;"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="Components.closeAddModal()">Cancel</button>
+                <button class="modal-btn confirm" onclick="Components.confirmAddItem()">Add to Stock</button>
+            </div>
+        `;
+        document.getElementById('modalOverlay').classList.add('show');
+
+        // Auto-focus part name if barcode already filled
+        setTimeout(() => {
+            const f = barcode
+                ? document.getElementById('modalPartName')
+                : document.getElementById('modalPartNo');
+            if (f) f.focus();
+        }, 100);
+    },
+
+    closeAddModal() {
+        document.getElementById('modalOverlay').classList.remove('show');
+    },
+
+    async confirmAddItem() {
+        const nameInput = document.getElementById('modalPartName');
+        const name = nameInput.value.trim();
+        if (!name) {
+            Utils.shakeElement(nameInput);
+            return;
+        }
+        const wsSelect = document.getElementById('modalPartWorkstation');
+        const workstationId = wsSelect && wsSelect.value ? parseInt(wsSelect.value) : null;
+        const item = {
+            partNo:        document.getElementById('modalPartNo').value.trim(),
+            name:          name,
+            location:      document.getElementById('modalPartLocation').value.trim(),
+            quantity:      parseInt(document.getElementById('modalPartQty').value) || 1,
+            minStock:      parseInt(document.getElementById('modalPartMinStock').value) || 0,
+            notes:         document.getElementById('modalPartNotes').value.trim(),
+            workstationId: workstationId,
+            addedBy:       App.userName
+        };
+        Components.closeAddModal();
+        Utils.showLoading();
+        try {
+            await API.addItem(item);
+            Utils.showToast('Part added!');
+        } catch (err) {
+            Utils.showToast('Error adding part', true);
+        } finally {
+            Utils.hideLoading();
+        }
     }
 };
 

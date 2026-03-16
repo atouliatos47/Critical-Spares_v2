@@ -72,23 +72,10 @@ const BarcodeScanner = (() => {
                 window.Components.showUseModal(match);
             }
         } else {
-            console.log('[Scanner] No match — going to Add Part');
-            toast('New barcode — fill in details');
-            if (window.UI && typeof window.UI.switchTab === 'function') {
-                window.UI.switchTab('add');
+            console.log('[Scanner] No match — opening Add Part modal');
+            if (typeof Components !== 'undefined' && typeof Components.showAddModal === 'function') {
+                Components.showAddModal(barcode);
             }
-            setTimeout(() => {
-                const f = document.getElementById('partNo');
-                if (!f) return;
-                f.value = barcode;
-                f.dispatchEvent(new Event('input'));
-                const clr = document.getElementById('clearPartNo');
-                if (clr) clr.style.display = 'flex';
-                f.style.background = '#d1fae5';
-                setTimeout(() => { f.style.background = '#f0f2f5'; }, 700);
-                const nf = document.getElementById('partName');
-                if (nf) nf.focus();
-            }, 200);
         }
     }
 
