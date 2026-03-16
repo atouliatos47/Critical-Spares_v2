@@ -27,6 +27,14 @@ const BarcodeScanner = (() => {
 
         if (e.key.length !== 1) return;
 
+        // If a form field is focused, clear buffer and let typing go through normally
+        const active = document.activeElement;
+        if (active && ['INPUT','TEXTAREA','SELECT'].includes(active.tagName)) {
+            clearTimeout(timer);
+            buffer = ''; fastCount = 0;
+            return;
+        }
+
         const now = Date.now();
         const gap = lastTime ? now - lastTime : 999;
         lastTime  = now;
