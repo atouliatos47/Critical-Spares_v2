@@ -15,6 +15,13 @@ const BarcodeScanner = (() => {
              'ArrowUp','ArrowDown','ArrowLeft','ArrowRight',
              'Escape','F1','F2','F3','F4','F5'].includes(e.key)) return;
 
+        // Let human typing through when a form field is focused
+        const active = document.activeElement;
+        if (active && ['INPUT','TEXTAREA','SELECT'].includes(active.tagName)) {
+            buffer = '';
+            return;
+        }
+
         // Enter = commit immediately
         if (e.key === 'Enter') {
             clearTimeout(timer);
