@@ -19,8 +19,10 @@ const BarcodeScanner = (() => {
         // Enter = scanner terminator — commit whatever is in buffer
         if (e.key === 'Enter') {
             clearTimeout(timer);
-            const b = buffer; buffer = ''; fastChars = 0; lastTime = 0;
-            if (b.length >= MIN_BARCODE_LENGTH && fastChars >= MIN_BARCODE_LENGTH - 1) {
+            const b = buffer;
+            const fc = fastChars;
+            buffer = ''; fastChars = 0; lastTime = 0;
+            if (b.length >= MIN_BARCODE_LENGTH && fc >= MIN_BARCODE_LENGTH - 1) {
                 commitScan(b.trim());
             }
             return;
