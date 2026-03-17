@@ -111,6 +111,7 @@ const Components = {
 
     async confirmDeleteWorkstation(id) {
         Components.closeModal();
+        Components.closeContentModal();
         Utils.showLoading();
         try {
             await API.deleteWorkstation(id);
