@@ -160,34 +160,31 @@ const UI = {
 
         if (navigator.vibrate) navigator.vibrate(100);
 
-        // Match on partNo (barcode) field
-        const item = API.items.find(i => i.partNo && i.partNo === barcode);
+        // Match on partNo (barcode) field — same logic as Bluetooth scanner
+        const match = API.items.find(i =>
+            (i.partNo || '').trim().toLowerCase() === barcode.trim().toLowerCase() && i.partNo !== ''
+        );
+
+        const needsRestock = match && (
+            match.quantity === 0 ||
+            (match.minStock > 0 && match.quantity <= match.minStock)
+        );
 
         this.closeScanner();
 
-        if (item) {
-            // ITEM EXISTS: Open Use modal
+        if (match && !needsRestock) {
             setTimeout(() => {
-                if (window.Components) Components.showUseModal(item);
-                Utils.showToast(`Found: ${item.name}`);
+                if (window.Components) Components.showUseModal(match);
+                Utils.showToast('Found: ' + match.name);
+            }, 500);
+        } else if (needsRestock) {
+            setTimeout(() => {
+                if (window.Components) Components.showRestockModal(match);
+                Utils.showToast('Low stock: ' + match.name);
             }, 500);
         } else {
-            // NEW ITEM: Switch to Add tab, fill partNo (locked), leave partName empty
-            this.switchTab('add');
-            const partNoInput = document.getElementById('partNo');
-            const partNameInput = document.getElementById('partName');
-            if (partNoInput) {
-                partNoInput.value = barcode;
-                partNoInput.readOnly = true;
-                partNoInput.style.background = '#e8f4f8';
-                const clearBtn = document.getElementById('clearPartNo');
-                if (clearBtn) clearBtn.style.display = 'flex';
-            }
-            if (partNameInput) {
-                partNameInput.value = '';
-                setTimeout(() => partNameInput.focus(), 300);
-            }
-            Utils.showToast('New barcode scanned — enter the part name.');
+            // Unknown barcode — open Add modal
+            if (window.Components) Components.showAddModal(barcode);
         }
     },
 
