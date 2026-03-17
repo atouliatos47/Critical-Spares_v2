@@ -394,7 +394,7 @@ const Components = {
 
         const wsName = API.getWorkstationName(item.workstationId) || '';
         const modal = document.getElementById('modal');
-        modal.style.maxWidth = '420px';
+        modal.style.maxWidth = '320px';
         modal.innerHTML = `
             <h3>Barcode Label</h3>
             <div id="barcodeLabel" style="background:#ffffff; border:2px solid #2D4A5C; border-radius:8px; padding:16px; margin:16px 0; text-align:center; font-family:Arial,sans-serif;">
@@ -421,8 +421,8 @@ const Components = {
             try {
                 JsBarcode('#barcodesvg', barcodeValue, {
                     format: 'CODE128',
-                    width: 2,
-                    height: 60,
+                    width: 1.5,
+                    height: 50,
                     displayValue: false,
                     margin: 4
                 });
