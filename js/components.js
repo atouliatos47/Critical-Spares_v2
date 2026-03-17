@@ -25,7 +25,7 @@ const Components = {
         try {
             await API.useItem(id, amount, App.userName);
             Utils.showToast('Part used successfully');
-        } catch(e) {
+        } catch (e) {
             Utils.showToast('Error using part', true);
         } finally {
             Utils.hideLoading();
@@ -57,7 +57,7 @@ const Components = {
         try {
             await API.restockItem(id, amount);
             Utils.showToast('Restocked successfully');
-        } catch(e) {
+        } catch (e) {
             Utils.showToast('Error restocking', true);
         } finally {
             Utils.hideLoading();
@@ -84,7 +84,7 @@ const Components = {
         try {
             await API.deleteItem(id);
             Utils.showToast('Part deleted');
-        } catch(e) {
+        } catch (e) {
             Utils.showToast('Error deleting part', true);
         } finally {
             Utils.hideLoading();
@@ -99,8 +99,8 @@ const Components = {
             <div class="modal-sub">
                 Remove <strong>${Utils.escapeHtml(ws.name)}</strong>?
                 ${partCount > 0
-                    ? '<br><br><span style="color:#f59e0b;font-weight:600;">⚠️ ' + partCount + ' part' + (partCount !== 1 ? 's are' : ' is') + ' assigned. They will be unassigned but not deleted.</span>'
-                    : ''}
+                ? '<br><br><span style="color:#f59e0b;font-weight:600;">⚠️ ' + partCount + ' part' + (partCount !== 1 ? 's are' : ' is') + ' assigned. They will be unassigned but not deleted.</span>'
+                : ''}
             </div>
             <div class="modal-actions">
                 <button class="modal-btn cancel" onclick="Components.closeModal()">Cancel</button>
@@ -117,7 +117,7 @@ const Components = {
         try {
             await API.deleteWorkstation(id);
             Utils.showToast('Workstation deleted');
-        } catch(e) {
+        } catch (e) {
             Utils.showToast('Error deleting workstation', true);
         } finally {
             Utils.hideLoading();
@@ -127,10 +127,10 @@ const Components = {
     showStatsModal(items) {
         const totalItems = items.length;
         const totalStock = items.reduce((sum, i) => sum + (i.quantity || 0), 0);
-        const lowStock   = items.filter(i => i.minStock > 0 && i.quantity <= i.minStock).length;
+        const lowStock = items.filter(i => i.minStock > 0 && i.quantity <= i.minStock).length;
         const outOfStock = items.filter(i => i.quantity === 0).length;
-        const wsCount    = API.workstations.length;
-        const assigned   = items.filter(i => i.workstationId).length;
+        const wsCount = API.workstations.length;
+        const assigned = items.filter(i => i.workstationId).length;
         const modal = document.getElementById('modal');
         modal.innerHTML = `
             <h3>Statistics</h3>
@@ -225,14 +225,14 @@ const Components = {
         if (!name) { Utils.shakeElement(nameInput); return; }
         const wsSelect = document.getElementById('modalPartWorkstation');
         const item = {
-            partNo:        document.getElementById('modalPartNo').value.trim(),
+            partNo: document.getElementById('modalPartNo').value.trim(),
             name,
-            location:      document.getElementById('modalPartLocation').value.trim(),
-            quantity:      parseInt(document.getElementById('modalPartQty').value) || 1,
-            minStock:      parseInt(document.getElementById('modalPartMinStock').value) || 0,
-            notes:         document.getElementById('modalPartNotes').value.trim(),
+            location: document.getElementById('modalPartLocation').value.trim(),
+            quantity: parseInt(document.getElementById('modalPartQty').value) || 1,
+            minStock: parseInt(document.getElementById('modalPartMinStock').value) || 0,
+            notes: document.getElementById('modalPartNotes').value.trim(),
             workstationId: wsSelect && wsSelect.value ? parseInt(wsSelect.value) : null,
-            addedBy:       App.userName
+            addedBy: App.userName
         };
         Components.closeModal();
         Utils.showLoading();
@@ -255,7 +255,7 @@ const Components = {
                 });
             }
             Utils.showToast('Part added!');
-        } catch(e) {
+        } catch (e) {
             Utils.showToast('Error adding part', true);
         } finally {
             Utils.hideLoading();
@@ -268,7 +268,7 @@ const Components = {
 
     showStockModal() {
         const overlay = document.getElementById('contentModalOverlay');
-        const modal   = document.getElementById('contentModal');
+        const modal = document.getElementById('contentModal');
         if (!overlay || !modal) return;
         Components._stockFilter = 'all';
         modal.innerHTML = `
@@ -337,7 +337,7 @@ const Components = {
 
     showMachinesModal() {
         const overlay = document.getElementById('contentModalOverlay');
-        const modal   = document.getElementById('contentModal');
+        const modal = document.getElementById('contentModal');
         if (!overlay || !modal) return;
         const wsOptions = API.workstations.map(ws =>
             '<option value="' + ws.id + '">' + Utils.escapeHtml(ws.name) + '</option>'
@@ -391,7 +391,7 @@ const Components = {
             Utils.showToast('Workstation added!');
             Components.closeContentModal();
             setTimeout(() => Components.showMachinesModal(), 150);
-        } catch(e) {
+        } catch (e) {
             Utils.showToast('Error adding workstation', true);
         } finally {
             Utils.hideLoading();
@@ -419,6 +419,7 @@ const Components = {
                 <div style="font-size:9px; font-weight:700; color:#2D4A5C; text-transform:uppercase; letter-spacing:2px; margin-bottom:3px;">Clamason</div>
                 <svg id="barcodesvg" style="display:block; margin:0 auto;"></svg>
                 <div style="font-size:9px; color:#1a1a2e; margin-top:3px; letter-spacing:1.5px; font-weight:600;">${Utils.escapeHtml(barcodeValue)}</div>
+                <div style="font-size:8px; color:#444; margin-top:2px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:225px;">${Utils.escapeHtml(item.name)}</div>
             </div>
             <div class="modal-actions">
                 <button class="modal-btn cancel" onclick="Components.closeModal()">Close</button>
@@ -438,7 +439,7 @@ const Components = {
                     displayValue: false,
                     margin: 2
                 });
-            } catch(e) {
+            } catch (e) {
                 console.error('Barcode error:', e);
             }
         }, 100);
