@@ -79,6 +79,7 @@ const Components = {
 
     async confirmDelete(id) {
         Components.closeModal();
+        Components.closeContentModal();
         Utils.showLoading();
         try {
             await API.deleteItem(id);
