@@ -237,7 +237,23 @@ const Components = {
         Components.closeModal();
         Utils.showLoading();
         try {
-            await API.addItem(item);
+            const saved = await API.addItem(item);
+            // If no part number was given, auto-assign CLAM-XXXXX and save it
+            if (!saved.partNo || !saved.partNo.trim()) {
+                const autoCode = 'CLAM-' + String(saved.id).padStart(5, '0');
+                await fetch('/items/' + saved.id + '/edit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        partNo: autoCode,
+                        name: saved.name,
+                        location: saved.location || '',
+                        workstationId: saved.workstationId || null,
+                        minStock: saved.minStock || 0,
+                        notes: saved.notes || ''
+                    })
+                });
+            }
             Utils.showToast('Part added!');
         } catch(e) {
             Utils.showToast('Error adding part', true);
