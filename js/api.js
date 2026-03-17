@@ -160,16 +160,6 @@ const API = {
         return await response.json();
     },
 
-    async updateItem(id, data) {
-        const response = await fetch(`/items/${id}/edit`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        if (!response.ok) throw new Error('Failed to update item');
-        return await response.json();
-    },
-
     // ===== WORKSTATION METHODS =====
 
     async addWorkstation(ws) {
