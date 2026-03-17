@@ -32,6 +32,9 @@ const UI = {
         }
         const nav = document.querySelector('.bottom-nav');
         if (nav) nav.style.display = 'none';
+        // Hide any open modals behind the splash
+        document.getElementById('modalOverlay')?.classList.remove('show');
+        document.getElementById('contentModalOverlay')?.classList.remove('show');
     },
 
     hideHome() {

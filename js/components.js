@@ -193,12 +193,12 @@ const Components = {
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                 <div class="form-row">
                     <label>Quantity</label>
-                    <input type="number" id="modalPartQty" value="1" min="0" onfocus="setTimeout(()=>this.select(),50)"
+                    <input type="number" id="modalPartQty" value="1" min="0" onclick="this.select()"
                         style="width:100%; padding:12px; border:2px solid #e2e5ea; border-radius:8px;">
                 </div>
                 <div class="form-row">
                     <label>Min Stock</label>
-                    <input type="number" id="modalPartMinStock" value="0" min="0" onfocus="setTimeout(()=>this.select(),50)"
+                    <input type="number" id="modalPartMinStock" value="0" min="0" onclick="this.select()"
                         style="width:100%; padding:12px; border:2px solid #e2e5ea; border-radius:8px;">
                 </div>
             </div>
