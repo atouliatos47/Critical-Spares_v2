@@ -317,6 +317,7 @@ const UI = {
                 <div class="item-meta">
                     ${wsName ? '<span class="ws-tag">🏭 ' + Utils.escapeHtml(wsName) + '</span>' : ''}
                     ${item.location ? '<span>📍 ' + Utils.escapeHtml(item.location) + '</span>' : ''}
+                    ${item.partNo ? '<span style="font-family:monospace; font-size:11px; color:#95C11F; font-weight:700; background:#1a2f3d; padding:2px 6px; border-radius:4px;">▦ ' + Utils.escapeHtml(item.partNo) + '</span>' : ''}
                     <span>👤 ${Utils.escapeHtml(item.addedBy)}</span>
                     <span>🕐 ${time}</span>
                 </div>
