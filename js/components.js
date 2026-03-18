@@ -353,7 +353,7 @@ const Components = {
                         style="flex:1; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px;">
                     <input type="text" id="modalWsDesc" placeholder="Description"
                         style="flex:1; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px;">
-                    <button class="btn-submit" onclick="Components._addWs()" style="padding:10px 16px; white-space:nowrap; margin:0;">Add</button>
+                    <button class="btn-submit" onclick="Components._addWs()" style="padding:10px 20px; white-space:nowrap; margin:0; background:#95C11F; color:#fff; font-weight:700; font-size:15px; border-radius:8px; border:none; cursor:pointer;">Add</button>
                 </div>
                 <select id="modalWsSelect" class="form-select" onchange="Components._renderMachines()">
                     <option value="">— Select a Workstation —</option>
