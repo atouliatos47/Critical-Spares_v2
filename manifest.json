@@ -1,23 +1,50 @@
 {
+    "id": "https://critical-spares-v2.onrender.com/",
     "name": "Clamason Critical Spares",
     "short_name": "Spares",
     "description": "Critical Spares Tracker for Clamason Industries",
     "start_url": "/",
+    "scope": "/",
     "display": "standalone",
     "background_color": "#1a2a35",
     "theme_color": "#2D4A5C",
     "orientation": "portrait",
+    "lang": "en-GB",
+    "categories": ["productivity", "utilities", "business"],
     "icons": [
         {
             "src": "img/icon-192.png",
             "sizes": "192x192",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any"
         },
         {
             "src": "img/icon-512.png",
             "sizes": "512x512",
             "type": "image/png",
-            "purpose": "any maskable"
+            "purpose": "any"
+        },
+        {
+            "src": "img/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "img/screenshot-1.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "Critical Spares Dashboard"
+        },
+        {
+            "src": "img/screenshot-2.png",
+            "sizes": "720x1280",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "Stock List View"
         }
     ]
 }
