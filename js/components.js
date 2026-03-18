@@ -348,12 +348,12 @@ const Components = {
                 
             </div>
             <div style="padding:12px 20px; border-bottom:1px solid #e2e5ea; flex-shrink:0; display:flex; flex-direction:column; gap:10px;">
-                <div style="display:flex; gap:8px;">
+                <div style="display:flex; flex-direction:column; gap:8px;">
                     <input type="text" id="modalWsName" placeholder="Workstation name *"
-                        style="flex:1; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px;">
-                    <input type="text" id="modalWsDesc" placeholder="Description"
-                        style="flex:1; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px;">
-                    <button class="btn-submit" onclick="Components._addWs()" style="padding:10px 20px; white-space:nowrap; margin:0; background:#95C11F; color:#fff; font-weight:700; font-size:15px; border-radius:8px; border:none; cursor:pointer;">Add</button>
+                        style="width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; box-sizing:border-box;">
+                    <input type="text" id="modalWsDesc" placeholder="Description (optional)"
+                        style="width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; box-sizing:border-box;">
+                    <button onclick="Components._addWs()" style="width:100%; padding:12px; background:#95C11F; color:#fff; font-weight:700; font-size:15px; border-radius:8px; border:none; cursor:pointer;">+ Add Workstation</button>
                 </div>
                 <select id="modalWsSelect" class="form-select" onchange="Components._renderMachines()">
                     <option value="">— Select a Workstation —</option>
